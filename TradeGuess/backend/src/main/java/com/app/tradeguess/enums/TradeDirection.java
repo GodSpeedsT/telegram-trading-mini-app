@@ -1,4 +1,6 @@
 package com.app.tradeguess.enums;
 
-public class TradeDirection {
+public enum TradeDirection {
+    LONG,
+    SHORT
 }

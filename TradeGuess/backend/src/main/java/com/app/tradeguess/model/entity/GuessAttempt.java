@@ -1,37 +1,40 @@
-package com.app.tradeguess.model;
+package com.app.tradeguess.model.entity;
 
-import com.app.tradeguess.enums.TradeDirection;
+import com.app.tradeguess.model.enums.TradeDirection;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Table(name = "guess_attempts")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "guess_attempts")
 public class GuessAttempt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chart_segment_id", nullable = false)
     private ChartSegment chartSegment;
 
-    @Enumerated(EnumType.STRING)
-    private TradeDirection direction;
+    @Column(name = "user_direction")
+    private String userDirection;
 
     @Column(name = "is_correct")
     private Boolean isCorrect;
 
     @Column(name = "attempted_at")
     private LocalDateTime attemptedAt = LocalDateTime.now();
+
 }

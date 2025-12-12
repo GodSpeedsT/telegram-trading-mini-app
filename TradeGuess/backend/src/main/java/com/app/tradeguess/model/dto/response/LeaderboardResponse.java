@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 public class LeaderboardResponse {
-    private String period; // "weekly", "monthly"
+    private String period;
     private LocalDateTime calculatedAt;
     private List<LeaderboardEntry> entries;
 

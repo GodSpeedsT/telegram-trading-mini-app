@@ -1,22 +1,25 @@
 package com.app.tradeguess.controller.api;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.app.tradeguess.model.dto.response.ApiResponse;
+import com.app.tradeguess.service.StatsService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@RequestMapping("/auth")
+
+@RequestMapping("/api")
 @RestController
+@RequiredArgsConstructor
 public class StatsController {
 
-    @PostMapping("/guess")
-    public String guess() {
-
-    }
+    private final StatsService statsService;
 
     @GetMapping("/me/stats")
-    public String stats() {
-
+    public ResponseEntity<ApiResponse<StatsResponse>> getStats(
+            @RequestParam Long userId
+    ) {
+       StatsResponse stats = statsService.getUserStats(userId);
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
 }

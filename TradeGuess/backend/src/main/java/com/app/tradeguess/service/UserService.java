@@ -1,6 +1,7 @@
 package com.app.tradeguess.service;
 
 import com.app.tradeguess.model.dto.request.AuthRequest;
+import com.app.tradeguess.model.dto.response.AuthResponse;
 import com.app.tradeguess.model.entity.User;
 import com.app.tradeguess.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,16 +13,19 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public User findOrCreateUser(
-            AuthRequest authRequest
-    ) {
-        return userRepository.findByTelegramId(authRequest.getTelegramId())
-                .orElseGet(() -> {
-                    User user = new User();
-                    user.setTelegramId(authRequest.getTelegramId());
-                    user.setUsername(authRequest.getUsername());
-                    user.setFirstName(authRequest.getFirstName());
-                    return userRepository.save(user);
-                });
+    public AuthResponse authenticate(AuthRequest request) {
+        User user = findOrCreateUser(request);
+
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .token(generateToken(user.getId()))
+                .isNewUser(false)
+                .build();
+    }
+
+    public String generateToken(Long id) {
+        return "user-token-" + id + "-" + System.currentTimeMillis();
     }
 }

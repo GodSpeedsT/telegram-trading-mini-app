@@ -6,6 +6,7 @@ import com.app.tradeguess.model.dto.response.GuessResponse;
 import com.app.tradeguess.model.entity.ChartSegment;
 import com.app.tradeguess.model.entity.GuessAttempt;
 import com.app.tradeguess.model.entity.User;
+import com.app.tradeguess.model.enums.TradeDirection;
 import com.app.tradeguess.repository.ChartSegmentRepository;
 import com.app.tradeguess.repository.GuessAttemptRepository;
 import com.app.tradeguess.repository.UserRepository;
@@ -14,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -51,7 +51,8 @@ public class GameService {
 
     public GuessResponse processGuess(
             Long userId,
-            GuessRequest request) {
+            GuessRequest request
+    ) {
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
                 .orElseThrow(() -> new RuntimeException("Segment not found"));
 
@@ -70,12 +71,12 @@ public class GameService {
 
     private boolean checkIfCorrect(
             ChartSegment segment,
-            String direction) {
+            TradeDirection direction) {
         Integer correctDirection = segment.getCalculatedDirection();
 
-        if ("LONG".equals(direction)) {
+        if (direction == TradeDirection.LONG) {
             return correctDirection == 1;
-        } else if ("SHORT".equals(direction)) {
+        } else if (direction == TradeDirection.SHORT) {
             return correctDirection == -1;
         }
         return false;
@@ -84,7 +85,7 @@ public class GameService {
     private void saveAttempt(
             Long userId,
             ChartSegment segment,
-            String direction,
+            TradeDirection direction,
             boolean isCorrect) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -116,7 +117,7 @@ public class GameService {
 
     private Integer getDailyAttempts(Long userId) {
 
-        String key = "user:" + userId + ":attempts:" + LocalDateTime.now();
+        String key = "user:" + userId + ":attempts:" + LocalDate.now();
         String attempts = redisTemplate.opsForValue().get(key);
         return attempts != null ? Integer.parseInt(attempts) : 0;
     }

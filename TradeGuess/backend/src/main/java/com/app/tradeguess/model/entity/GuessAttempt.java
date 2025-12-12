@@ -28,8 +28,9 @@ public class GuessAttempt {
     @JoinColumn(name = "chart_segment_id", nullable = false)
     private ChartSegment chartSegment;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "user_direction")
-    private String userDirection;
+    private TradeDirection userDirection;
 
     @Column(name = "is_correct")
     private Boolean isCorrect;

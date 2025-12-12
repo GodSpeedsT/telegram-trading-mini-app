@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 
 @Entity
-@Table(name = "chart_segments")
+@Table(name = "chart_segment")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

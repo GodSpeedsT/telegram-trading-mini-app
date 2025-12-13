@@ -1,14 +1,21 @@
 package com.app.tradeguess.model.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Builder
+@RequiredArgsConstructor
+@AllArgsConstructor
 @Data
-public class LeaderboardResponse {
+public class LeaderboardResponse implements Serializable {
     private String period;
     private LocalDateTime calculatedAt;
     private List<LeaderboardEntry> entries;

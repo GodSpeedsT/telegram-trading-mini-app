@@ -6,13 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class GuessResponse {
+public class GuessResponse implements Serializable {
     private Boolean isCorrect;
     private List<Candle> resultCandles;
     private String message;

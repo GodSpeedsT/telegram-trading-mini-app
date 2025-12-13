@@ -10,21 +10,23 @@ import com.app.tradeguess.model.enums.TradeDirection;
 import com.app.tradeguess.repository.ChartSegmentRepository;
 import com.app.tradeguess.repository.GuessAttemptRepository;
 import com.app.tradeguess.repository.UserRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GameService {
@@ -32,47 +34,57 @@ public class GameService {
     private final ChartSegmentRepository chartSegmentRepository;
     private final GuessAttemptRepository guessAttemptRepository;
     private final UserRepository userRepository;
+    private final StatsService statsService;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
     public ChartResponse getTrainingChart(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("Пользователь не найден.");
+        }
+
         Integer attemptsToday = getDailyAttempts(userId);
         if (attemptsToday >= 10) {
-            throw new RuntimeException("Days limit exceeded");
+            throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
         }
 
         ChartSegment segment = getRandomSegment();
 
+        if (segment == null) {
+            throw new RuntimeException("Нет доступных графиков. Добавьте данные в chart_segments.");
+        }
+
         return ChartResponse.builder()
                 .segmentId(segment.getId())
-                .candles(parseCandles(segment.getDisplayCandles(),ChartResponse.Candle.class))
-                .attemptsLeft(10 - attemptsToday - 1)
+                .candles(parseCandles(segment.getDisplayCandles(), ChartResponse.Candle.class))
+                .attemptsLeft(10 - attemptsToday)
                 .build();
     }
 
-    public GuessResponse processGuess(
-            Long userId,
-            GuessRequest request
-    ) {
+    @Transactional
+    public GuessResponse processGuess(Long userId, GuessRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + userId));
+
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
-                .orElseThrow(() -> new RuntimeException("Segment not found"));
+                .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
 
         boolean isCorrect = checkIfCorrect(segment, request.getDirection());
 
-        saveAttempt(userId, segment, request.getDirection(), isCorrect);
+        saveAttempt(user, segment, request.getDirection(), isCorrect);
         incrementDailyAttempts(userId);
+
+        statsService.evictUserStatsCache(userId);
 
         return GuessResponse.builder()
                 .isCorrect(isCorrect)
-                .message(isCorrect ? "Правильно" : "Неправильно")
-                .resultCandles(parseCandles(segment.getResultCandles(),GuessResponse.Candle.class))
+                .message(isCorrect ? "Правильно!" : "Неправильно!")
+                .resultCandles(parseCandles(segment.getResultCandles(), GuessResponse.Candle.class))
                 .priceChangePercent(calculatePriceChangePercent(segment))
                 .build();
     }
 
-    private boolean checkIfCorrect(
-            ChartSegment segment,
-            TradeDirection direction) {
+    private boolean checkIfCorrect(ChartSegment segment, TradeDirection direction) {
         Integer correctDirection = segment.getCalculatedDirection();
 
         if (direction == TradeDirection.LONG) {
@@ -83,14 +95,9 @@ public class GameService {
         return false;
     }
 
-    private void saveAttempt(
-            Long userId,
-            ChartSegment segment,
-            TradeDirection direction,
-            boolean isCorrect) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+    @CacheEvict(value = "userStats", key = "#user.id")
+    public void saveAttempt(User user, ChartSegment segment,
+                             TradeDirection direction, boolean isCorrect) {
         GuessAttempt attempt = new GuessAttempt();
         attempt.setUser(user);
         attempt.setChartSegment(segment);
@@ -99,27 +106,28 @@ public class GameService {
         attempt.setAttemptedAt(LocalDateTime.now());
 
         guessAttemptRepository.save(attempt);
+        log.info("Сохранена попытка пользователя {}: {}", user.getId(),
+                isCorrect ? "правильно" : "неправильно");
     }
 
     private ChartSegment getRandomSegment() {
-        Long total = chartSegmentRepository.count();
+        long total = chartSegmentRepository.count();
         if (total == 0) {
-            throw new RuntimeException("No segments found");
+            throw new RuntimeException("В базе данных нет сегментов графиков. Добавьте данные.");
         }
-        Long randomId = ThreadLocalRandom.current().nextLong(1, total + 1);
 
-        return chartSegmentRepository.findById(randomId)
+        return chartSegmentRepository.findRandom()
                 .orElseGet(() -> {
-                    return chartSegmentRepository.findAll().stream()
-                            .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Segment not found"));
+                    long randomId = ThreadLocalRandom.current().nextLong(1, total + 1);
+                    return chartSegmentRepository.findById(randomId)
+                            .orElseThrow(() -> new RuntimeException("Сегмент не найден"));
                 });
     }
 
     private Integer getDailyAttempts(Long userId) {
-
         String key = "user:" + userId + ":attempts:" + LocalDate.now();
         String attempts = redisTemplate.opsForValue().get(key);
+        log.debug("Daily attempts for user {}: {}", userId, attempts);
         return attempts != null ? Integer.parseInt(attempts) : 0;
     }
 
@@ -130,51 +138,23 @@ public class GameService {
         if (attempts == 1) {
             redisTemplate.expire(key, 1, TimeUnit.DAYS);
         }
+
+        log.info("Увеличено количество попыток для пользователя {}: {}", userId, attempts);
     }
 
     private <T> List<T> parseCandles(String candlesJson, Class<T> candleClass) {
         try {
             if (candlesJson == null || candlesJson.trim().isEmpty()) {
-                return new ArrayList<>();
+                return List.of();
             }
-
-            // Используем TypeReference для правильного парсинга
-            return objectMapper.readValue(candlesJson,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, candleClass));
+            return objectMapper.readValue(
+                    candlesJson,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, candleClass)
+            );
         } catch (Exception e) {
-            System.err.println("Error parsing candles JSON: " + e.getMessage());
-            System.err.println("JSON: " + candlesJson);
-            e.printStackTrace();
-            throw new RuntimeException("Неверный формат данных свечей: " + e.getMessage());
+            log.error("Ошибка парсинга свечей: {}", e.getMessage());
+            throw new RuntimeException("Неверный формат данных свечей");
         }
-    }
-
-    private ChartResponse.Candle mapToCandleDto(Map<String, Object> rawCandle) {
-        ChartResponse.Candle candle = new ChartResponse.Candle();
-
-        Object timestamp = rawCandle.get("t");
-        if (timestamp instanceof Number) {
-            candle.setTimestamp(((Number) timestamp).longValue());
-        } else if (timestamp instanceof String) {
-            candle.setTimestamp(Long.parseLong((String) timestamp));
-        }
-
-        candle.setOpen(convertToDouble(rawCandle.get("o")));
-        candle.setHigh(convertToDouble(rawCandle.get("h")));
-        candle.setLow(convertToDouble(rawCandle.get("l")));
-        candle.setClose(convertToDouble(rawCandle.get("c")));
-        candle.setVolume(convertToDouble(rawCandle.get("v")));
-
-        return candle;
-    }
-
-    private Double convertToDouble(Object value) {
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
-        } else if (value instanceof String) {
-            return Double.parseDouble((String) value);
-        }
-        return 0.0;
     }
 
     private Double calculatePriceChangePercent(ChartSegment segment) {
@@ -195,5 +175,4 @@ public class GameService {
 
         return percent.setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
-
 }

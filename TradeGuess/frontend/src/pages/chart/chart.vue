@@ -1,117 +1,118 @@
+<template>
+  <div class="historical-chart-container">
+    <!-- Упрощенная панель управления -->
+    <div class="control-panel">
+      <div class="asset-selector">
+        <select v-model="selectedCategory" @change="onCategoryChange">
+          <option value="crypto">Криптовалюты</option>
+          <option value="stocks">Акции</option>
+          <option value="forex">Forex</option>
+        </select>
+
+        <select v-model="selectedAsset" @change="loadAssetData">
+          <option v-for="asset in availableAssets"
+                  :key="asset.assetKey"
+                  :value="asset.assetKey">
+            {{ asset.name }}
+          </option>
+        </select>
+
+        <button @click="loadRandomAsset" class="random-btn">
+          Случайный актив
+        </button>
+      </div>
+    </div>
+
+    <!-- График -->
+    <div class="chart-wrapper" v-if="chartOption">
+      <v-chart
+        :option="chartOption"
+        :autoresize="true"
+        class="chart"
+        theme="dark"
+      />
+    </div>
+
+    <!-- Информация -->
+    <div class="info-panel" v-if="currentAsset">
+      <h3>{{ currentAsset.name }} ({{ currentAsset.symbol }})</h3>
+      <p>Период: {{ currentAsset.period }}</p>
+      <p>Тип: {{ categoryLabels[selectedCategory] }}</p>
+      <p>Волатильность: {{ volatilityLabels[currentAsset.volatility] }}</p>
+      <p>Свечей показано: {{ displayedCandles }} из {{ currentAsset.data.length }}</p>
+    </div>
+  </div>
+</template>
+
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import VChart from 'vue-echarts';
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import { CandlestickChart, LineChart } from 'echarts/charts';
+import { ref, computed, onMounted } from 'vue';
 import {
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  DataZoomComponent,
-  VisualMapComponent,
-  LegendComponent,
-  AxisPointerComponent
-} from 'echarts/components';
-
-// Регистрация компонентов ECharts
-use([
-  CanvasRenderer,
-  CandlestickChart,
-  LineChart,
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  DataZoomComponent,
-  VisualMapComponent,
-  LegendComponent,
-  AxisPointerComponent
-]);
-
-// Тема графика
-const chartTheme = ref('dark');
+  historicalDatasets,
+  getRandomAsset
+} from '@/features/chartDataService';
 
 // Реактивные данные
-const candles = ref([]);
+const selectedCategory = ref('crypto');
+const selectedAsset = ref('bitcoin');
+const displayedCandles = ref(100);
 const chartOption = ref(null);
-const displayedCandles = ref(0);
+const currentAsset = ref(null);
 
-// Компьютед свойства
-const lastPrice = computed(() => {
-  if (candles.value.length === 0) return 'N/A';
-  const lastCandle = candles.value[candles.value.length - 1];
-  return lastCandle.close.toFixed(2);
+// Лейблы
+const categoryLabels = {
+  crypto: 'Криптовалюта',
+  stocks: 'Акции',
+  forex: 'Forex'
+};
+
+const volatilityLabels = {
+  'low': 'Низкая',
+  'medium': 'Средняя',
+  'high': 'Высокая',
+  'very high': 'Очень высокая'
+};
+
+// Доступные активы
+const availableAssets = computed(() => {
+  const assets = historicalDatasets[selectedCategory.value];
+  return Object.keys(assets).map(key => ({
+    assetKey: key,
+    ...assets[key]
+  }));
 });
 
-// Генерация случайных данных для свечей
-const generateRandomCandles = (count = 150) => {
-  const generatedCandles = [];
-  let basePrice = 100 + Math.random() * 50; // Начальная цена от 100 до 150
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - count);
-
-  for (let i = 0; i < count; i++) {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
-
-    // Волатильность (сильнее в понедельник)
-    const dayOfWeek = date.getDay();
-    const volatility = dayOfWeek === 1 ? 0.03 : 0.015; // Понедельник более волатильный
-
-    // Генерация цен
-    const open = i === 0 ? basePrice : generatedCandles[i-1].close;
-    const change = (Math.random() - 0.5) * 2 * volatility * open;
-    const close = open + change;
-    const high = Math.max(open, close) + Math.random() * volatility * open;
-    const low = Math.min(open, close) - Math.random() * volatility * open;
-    const volume = Math.floor(Math.random() * 1000000) + 100000;
-
-    generatedCandles.push({
-      date: date.toISOString().split('T')[0],
-      timestamp: date.getTime(),
-      open: Number(open.toFixed(2)),
-      close: Number(close.toFixed(2)),
-      high: Number(high.toFixed(2)),
-      low: Number(low.toFixed(2)),
-      volume: volume,
-      change: ((close - open) / open * 100).toFixed(2)
-    });
-
-    basePrice = close;
+// Загрузка данных актива
+const loadAssetData = () => {
+  const asset = historicalDatasets[selectedCategory.value]?.[selectedAsset.value];
+  if (asset) {
+    currentAsset.value = asset;
+    initializeChart();
   }
-
-  return generatedCandles;
 };
 
-// Форматирование даты
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ru-RU');
-};
+// Инициализация графика
+const initializeChart = () => {
+  if (!currentAsset.value?.data?.length) return;
 
-// Инициализация графика с новыми данными
-const initChartWithNewData = () => {
-  // Генерируем от 100 до 150 свечей случайным образом
-  const candleCount = Math.floor(Math.random() * 51) + 100; // 100-150 свечей
-  candles.value = generateRandomCandles(candleCount);
-  displayedCandles.value = Math.min(100, candleCount); // Показываем первые 100 или меньше, если свечей меньше
+  const dataToShow = currentAsset.value.data.slice(0, displayedCandles.value);
+  const xAxisData = dataToShow.map(candle => candle.date);
+  const seriesData = dataToShow.map(candle => [
+    candle.open,
+    candle.close,
+    candle.low,
+    candle.high
+  ]);
 
-  // Подготовка данных для ECharts
-  const xAxisData = candles.value.map(c => c.date);
-  const seriesData = candles.value.map(c => [c.open, c.close, c.low, c.high]);
-
-  // Конфигурация графика
   chartOption.value = {
     backgroundColor: '#1e1e1e',
     title: {
-      text: `Свечной график (${candleCount} свечей)`,
+      text: currentAsset.value.name,
       left: 'center',
       textStyle: {
         color: '#fff',
         fontSize: 18
       },
-      subtext: `Сгенерировано: ${new Date().toLocaleString('ru-RU')}`,
+      subtext: `Период: ${currentAsset.value.period}`,
       subtextStyle: {
         color: '#aaa',
         fontSize: 12
@@ -120,133 +121,78 @@ const initChartWithNewData = () => {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
-        type: 'cross',
-        label: {
-          backgroundColor: '#6a7985'
-        }
+        type: 'cross'
       },
-      formatter: function(params) {
-        const candle = candles.value[params[0].dataIndex];
+      formatter: (params) => {
+        const candleIndex = params[0].dataIndex;
+        const candle = dataToShow[candleIndex];
+        const change = ((candle.close - candle.open) / candle.open * 100).toFixed(2);
+
         return `
-          <div style="padding: 5px;">
+          <div style="padding: 10px;">
             <strong>${candle.date}</strong><br/>
-            Открытие: <b>${candle.open}</b><br/>
-            Закрытие: <b>${candle.close}</b> (${candle.change}%)<br/>
-            Максимум: ${candle.high}<br/>
-            Минимум: ${candle.low}<br/>
-            Объем: ${candle.volume.toLocaleString()}
+            Открытие: ${formatPrice(candle.open)}<br/>
+            Закрытие: ${formatPrice(candle.close)} (${change}%)<br/>
+            Максимум: ${formatPrice(candle.high)}<br/>
+            Минимум: ${formatPrice(candle.low)}<br/>
+            Объем: ${formatVolume(candle.volume)}
           </div>
         `;
       }
     },
-    legend: {
-      data: ['Свечи', 'Объем'],
-      textStyle: {
-        color: '#fff'
-      },
-      top: 40
+    grid: {
+      left: '10%',
+      right: '8%',
+      bottom: '15%',
+      top: '15%'
     },
-    grid: [
-      {
-        left: '10%',
-        right: '8%',
-        top: '18%',
-        height: '60%'
+    xAxis: {
+      type: 'category',
+      data: xAxisData,
+      axisLine: {
+        lineStyle: { color: '#666' }
       },
-      {
-        left: '10%',
-        right: '8%',
-        top: '80%',
-        height: '15%'
-      }
-    ],
-    xAxis: [
-      {
-        type: 'category',
-        data: xAxisData,
-        scale: true,
-        boundaryGap: false,
-        axisLine: {
-          onZero: false,
-          lineStyle: { color: '#666' }
-        },
-        axisTick: {
-          show: false
-        },
-        axisLabel: {
-          color: '#aaa',
-          formatter: function(value) {
-            const date = new Date(value);
-            return `${date.getDate()}.${date.getMonth()+1}`;
-          }
-        },
-        splitLine: { show: false },
-        min: 0,
-        max: displayedCandles.value - 1
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: xAxisData,
-        scale: true,
-        boundaryGap: false,
-        axisLine: { onZero: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        splitLine: { show: false },
-        min: 0,
-        max: displayedCandles.value - 1
-      }
-    ],
-    yAxis: [
-      {
-        scale: true,
-        splitArea: {
-          show: true,
-          areaStyle: {
-            color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.05)']
-          }
-        },
-        axisLine: {
-          lineStyle: { color: '#666' }
-        },
-        axisLabel: {
-          color: '#aaa',
-          inside: true
-        },
-        splitLine: {
-          lineStyle: {
-            type: 'dashed',
-            color: '#444'
-          }
+      axisLabel: {
+        color: '#aaa',
+        formatter: (value) => {
+          const date = new Date(value);
+          return `${date.getDate()}.${date.getMonth() + 1}`;
         }
       },
-      {
-        scale: true,
-        gridIndex: 1,
-        splitNumber: 2,
-        axisLabel: { show: false },
-        axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { show: false }
+      splitLine: {
+        show: true,
+        lineStyle: { color: '#444' }
       }
-    ],
+    },
+    yAxis: {
+      scale: true,
+      axisLine: {
+        lineStyle: { color: '#666' }
+      },
+      axisLabel: {
+        color: '#aaa',
+        formatter: (value) => formatPrice(value)
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#444',
+          type: 'dashed'
+        }
+      }
+    },
     dataZoom: [
       {
         type: 'inside',
-        xAxisIndex: [0, 1],
         start: 0,
-        end: (displayedCandles.value / candles.value.length) * 100,
-        minValueSpan: 10, // Минимум 10 свечей видно
-        maxValueSpan: displayedCandles.value
+        end: 100,
+        minValueSpan: 20
       },
       {
         show: true,
         type: 'slider',
-        xAxisIndex: [0, 1],
-        top: '95%',
+        top: '90%',
         start: 0,
-        end: (displayedCandles.value / candles.value.length) * 100,
+        end: 100,
         backgroundColor: '#333',
         borderColor: '#555',
         fillerColor: 'rgba(67, 160, 71, 0.2)',
@@ -258,174 +204,130 @@ const initChartWithNewData = () => {
         }
       }
     ],
-    visualMap: {
-      show: false,
-      seriesIndex: 0,
-      dimension: 2,
-      pieces: [
-        {
-          value: 1,
-          color: '#ef5350' // красный для падения
-        },
-        {
-          value: -1,
-          color: '#26a69a' // зеленый для роста
-        }
-      ]
-    },
     series: [
       {
         name: 'Свечи',
         type: 'candlestick',
         data: seriesData,
         itemStyle: {
-          color: '#26a69a', // цвет для роста
-          color0: '#ef5350', // цвет для падения
+          color: '#26a69a',
+          color0: '#ef5350',
           borderColor: '#26a69a',
-          borderColor0: '#ef5350',
-          borderWidth: 1
-        },
-        emphasis: {
-          itemStyle: {
-            borderWidth: 2,
-            shadowBlur: 10,
-            shadowColor: 'rgba(0, 0, 0, 0.3)'
-          }
-        }
-      },
-      {
-        name: 'Объем',
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: candles.value.map((c, index) => ({
-          value: c.volume,
-          itemStyle: {
-            color: seriesData[index][1] >= seriesData[index][0] ? '#26a69a' : '#ef5350'
-          }
-        })),
-        itemStyle: {
-          opacity: 0.7
+          borderColor0: '#ef5350'
         }
       }
     ]
   };
-
-  console.log(`Сгенерировано ${candleCount} свечей. Показано ${displayedCandles.value}`);
 };
 
-// Обновление графика
-const refreshChart = () => {
-  initChartWithNewData();
+// Форматирование
+const formatPrice = (price) => {
+  if (!price) return 'N/A';
+  return selectedCategory.value === 'forex' ?
+    price.toFixed(4) : price.toFixed(2);
 };
 
-// Инициализация при монтировании
+const formatVolume = (volume) => {
+  if (!volume) return 'N/A';
+  if (volume >= 1e9) return `$${(volume / 1e9).toFixed(2)}B`;
+  if (volume >= 1e6) return `$${(volume / 1e6).toFixed(2)}M`;
+  return `$${(volume / 1e3).toFixed(2)}K`;
+};
+
+// Обработчики
+const onCategoryChange = () => {
+  const assets = availableAssets.value;
+  if (assets.length > 0) {
+    selectedAsset.value = assets[0].assetKey;
+    loadAssetData();
+  }
+};
+
+const loadRandomAsset = () => {
+  const random = getRandomAsset();
+  selectedCategory.value = random.category;
+  selectedAsset.value = random.assetKey;
+  loadAssetData();
+};
+
+// Инициализация
 onMounted(() => {
-  initChartWithNewData();
-
-  // Можно также добавить автообновление по таймеру
-  // setInterval(() => refreshChart(), 30000); // каждые 30 секунд
+  loadAssetData();
 });
 </script>
 
-<template>
-  <div class="candlestick-container">
-    <div class="controls">
-      <button @click="refreshChart">Обновить график</button>
-      <span class="info">Показано свечей: {{ displayedCandles }} из {{ candles.length }}</span>
-    </div>
-
-    <div class="chart-wrapper">
-      <VChart
-        v-if="chartOption"
-        :option="chartOption"
-        :autoresize="true"
-        class="chart"
-        :theme="chartTheme"
-      />
-    </div>
-
-    <div class="data-info">
-      <p>Период: {{ formatDate(candles[0]?.date) }} - {{ formatDate(candles[displayedCandles-1]?.date) }}</p>
-      <p>Последняя цена: {{ lastPrice }}</p>
-    </div>
-  </div>
-</template>
-
 <style scoped>
-.candlestick-container {
+.historical-chart-container {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
   background-color: #1e1e1e;
   color: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  padding: 20px;
 }
 
-.controls {
-  padding: 15px 20px;
+.control-panel {
+  margin-bottom: 20px;
+  padding: 15px;
   background-color: #252525;
-  border-bottom: 1px solid #333;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  border-radius: 6px;
 }
 
-.controls button {
+.asset-selector {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+select {
+  padding: 8px 16px;
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+button {
   padding: 8px 20px;
   background-color: #43a047;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
 }
 
-.controls button:hover {
+button:hover {
   background-color: #388e3c;
 }
 
-.controls .info {
-  color: #aaa;
-  font-size: 14px;
-}
-
 .chart-wrapper {
-  flex: 1;
-  padding: 10px;
+  width: 100%;
+  height: 500px;
+  margin: 20px 0;
 }
 
 .chart {
   width: 100%;
   height: 100%;
-  min-height: 500px;
 }
 
-.data-info {
-  padding: 15px 20px;
+.info-panel {
+  padding: 15px;
   background-color: #252525;
-  border-top: 1px solid #333;
-  font-size: 14px;
+  border-radius: 6px;
+  margin-top: 20px;
 }
 
-.data-info p {
+.info-panel h3 {
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+
+.info-panel p {
   margin: 5px 0;
-  color: #ddd;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .controls {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .chart {
-    min-height: 400px;
-  }
+  color: #aaa;
 }
 </style>

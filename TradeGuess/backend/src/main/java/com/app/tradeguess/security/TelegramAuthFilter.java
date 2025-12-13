@@ -1,4 +1,4 @@
-package com.app.tradeguess.security;
-
-public class TelegramAuthFilter {
-}
+//package com.app.tradeguess.security;
+//
+//public class TelegramAuthFilter {
+//}

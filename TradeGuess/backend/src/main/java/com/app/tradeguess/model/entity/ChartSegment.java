@@ -5,9 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 
 @Entity
-@Table(name = "chart_segment")
+@Table(name = "chart_segments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,10 +26,10 @@ public class ChartSegment {
     private String resultCandles;
 
     @Column(name = "price_at_decision")
-    private Double priceAtDecision;
+    private BigDecimal priceAtDecision;
 
     @Column(name = "price_at_target")
-    private Double priceAtTarget;
+    private BigDecimal priceAtTarget;
 
     @Column(name = "calculated_direction")
     private Integer calculatedDirection;

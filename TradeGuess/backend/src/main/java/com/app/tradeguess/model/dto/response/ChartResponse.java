@@ -1,5 +1,6 @@
 package com.app.tradeguess.model.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,11 +22,17 @@ public class ChartResponse {
     @AllArgsConstructor
     @Data
     public static class Candle {
+        @JsonProperty("t")
         private Long timestamp;
+        @JsonProperty("o")
         private Double open;
+        @JsonProperty("h")
         private Double high;
+        @JsonProperty("l")
         private Double low;
+        @JsonProperty("c")
         private Double close;
+        @JsonProperty("v")
         private Double volume;
     }
 }

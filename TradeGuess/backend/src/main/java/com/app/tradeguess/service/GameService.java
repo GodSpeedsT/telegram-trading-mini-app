@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -133,12 +134,18 @@ public class GameService {
 
     private <T> List<T> parseCandles(String candlesJson, Class<T> candleClass) {
         try {
-            return objectMapper.readValue(
-                    candlesJson,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, candleClass)
-            );
+            if (candlesJson == null || candlesJson.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Используем TypeReference для правильного парсинга
+            return objectMapper.readValue(candlesJson,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, candleClass));
         } catch (Exception e) {
-            throw new RuntimeException("Неверный формат данных свечей");
+            System.err.println("Error parsing candles JSON: " + e.getMessage());
+            System.err.println("JSON: " + candlesJson);
+            e.printStackTrace();
+            throw new RuntimeException("Неверный формат данных свечей: " + e.getMessage());
         }
     }
 
@@ -175,12 +182,18 @@ public class GameService {
             return 0.0;
         }
 
-        double change = segment.getPriceAtTarget() - segment.getPriceAtDecision();
-        double percent = (change / segment.getPriceAtDecision()) * 100;
+        BigDecimal decisionPrice = segment.getPriceAtDecision();
+        BigDecimal targetPrice = segment.getPriceAtTarget();
 
-        return BigDecimal.valueOf(percent)
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
+        if (decisionPrice.compareTo(BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+
+        BigDecimal change = targetPrice.subtract(decisionPrice);
+        BigDecimal percent = change.divide(decisionPrice, 10, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+
+        return percent.setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class StatsController {
 
-    private final StatsService statsService;
+        private final StatsService statsService;
 
     @GetMapping("/me/stats")
     public ResponseEntity<ApiResponse<StatsResponse>> getStats(@RequestParam Long userId) {

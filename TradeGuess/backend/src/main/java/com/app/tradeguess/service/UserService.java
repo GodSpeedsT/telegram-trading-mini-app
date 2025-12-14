@@ -41,12 +41,16 @@ public class UserService {
                 });
     }
 
+    public User findByUsername(String telegramUsername) {
+        return new User();
+    }
+
     private String generateToken(Long userId) {
         return "tg-" + userId + "-" + System.currentTimeMillis();
     }
 
     private boolean isNewUser(User user) {
-        return user.getCreatedAt().isAfter(LocalDateTime.now().minusMinutes(5));
+        return user.getCreatedAt().isAfter(LocalDateTime.now().minusDays(4));
     }
 
     public User getUserById(Long userId) {

@@ -1,5 +1,6 @@
 package com.app.tradeguess.model.entity;
 
+import com.app.tradeguess.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,9 @@ public class User {
 
     @Column(name = "first_name")
     private String firstName;
+
+    @Column(name = "roles")
+    private Role role = Role.ROLE_USER;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();

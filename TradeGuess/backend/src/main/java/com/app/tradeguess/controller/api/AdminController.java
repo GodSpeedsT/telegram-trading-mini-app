@@ -57,7 +57,6 @@ public class AdminController {
                 "Пользователь @" + request.getTelegramUsername() + " назначен администратором"));
     }
 
-    // Понизить админа
     @PostMapping("/users/{userId}/demote")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<AdminUserResponse>> demoteFromAdmin(
@@ -69,24 +68,6 @@ public class AdminController {
                 "Администратор понижен до пользователя"));
     }
 
-    // Блокировать/разблокировать
-    @PostMapping("/users/{userId}/block")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<AdminUserResponse>> blockUser(
-            @PathVariable Long userId,
-            @RequestParam Boolean block,
-            @RequestParam Long adminId) {
-
-        AdminUserResponse response = adminService.toggleUserBlock(userId, block, adminId);
-
-        String message = block
-                ? "Пользователь заблокирован"
-                : "Пользователь разблокирован";
-
-        return ResponseEntity.ok(ApiResponse.success(response, message));
-    }
-
-    // Сбросить дневные попытки
     @PostMapping("/users/{userId}/reset-attempts")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<String>> resetUserAttempts(
@@ -97,13 +78,12 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Дневные попытки пользователя сброшены"));
     }
 
-    // Получить статистику пользователя
     @GetMapping("/users/{userId}/stats")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<?>> getUserStats(
             @PathVariable Long userId) {
 
-        // Реализуйте отдельный метод в сервисе для подробной статистики
+        // Реализовать отдельный метод в сервисе для подробной статистики!!
         return ResponseEntity.ok(ApiResponse.success("Статистика пользователя"));
     }
 }

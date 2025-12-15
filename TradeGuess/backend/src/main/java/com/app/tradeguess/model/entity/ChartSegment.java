@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 
@@ -20,9 +22,11 @@ public class ChartSegment {
     private Long id;
 
     @Column(name = "display_candles", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String displayCandles;
 
     @Column(name = "result_candles", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String resultCandles;
 
     @Column(name = "price_at_decision")

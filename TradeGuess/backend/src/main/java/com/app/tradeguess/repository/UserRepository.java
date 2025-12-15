@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User,Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByTelegramId(Long telegramId);
 
     Optional<User> findByUsername(String username);
@@ -27,9 +27,9 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     List<User> findByRole(String role);
 
-    List<User> findByIsBlocked(Boolean isBlocked);
-
     @Query("SELECT u FROM User u WHERE " +
             "u.username = :username OR " +
             "u.username = CONCAT('@', :username)")
-    Optional<User> findByUsernameWithAt(@Param("username") String username);}
+
+    Optional<User> findByUsernameWithAt(@Param("username") String username);
+}

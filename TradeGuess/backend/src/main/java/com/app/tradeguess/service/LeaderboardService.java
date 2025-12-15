@@ -58,7 +58,7 @@ public class LeaderboardService {
                 entry.setCorrect(correct);
                 entry.setAccuracy(BigDecimal.valueOf(accuracy).setScale(2, RoundingMode.HALF_UP));
                 entry.setRating(BigDecimal.valueOf(rating).setScale(2, RoundingMode.HALF_UP));
-                entry.setChange(0); // Пока не реализовано
+                entry.setChange(0);
                 entry.setCurrentUser(false);
 
                 entries.add(entry);
@@ -88,8 +88,8 @@ public class LeaderboardService {
         response.setId(user.getId());
         response.setUsername(user.getUsername());
         response.setFirstName(user.getFirstName());
-        response.setLastName(null); // У вас нет этого поля
-        response.setIsPremium(false); // Пока не реализовано
+        response.setLastName(null);
+        response.setIsPremium(false);
         response.setCreatedAt(user.getCreatedAt());
         return response;
     }

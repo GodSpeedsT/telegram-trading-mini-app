@@ -2,7 +2,7 @@ package com.app.tradeguess.model.dto.response;
 
 import com.app.tradeguess.model.enums.Role;
 import lombok.*;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,5 +19,5 @@ public class AdminUserResponse {
     private LocalDateTime createdAt;
     private Long totalAttempts;
     private Long correctAttempts;
-    private Double accuracy;
+    private BigDecimal accuracy;
 }

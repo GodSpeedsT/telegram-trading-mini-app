@@ -21,14 +21,14 @@ public class LeaderboardResponse implements Serializable {
     private List<LeaderboardEntry> entries;
 
     @Data
-    public static class LeaderboardEntry {
+    public static class LeaderboardEntry implements Serializable {
         private Integer rank;
         private UserResponse user;
         private Long attempts;
         private Long correct;
         private BigDecimal accuracy;
         private BigDecimal rating;
-        private Integer change; // Изменение позиции с прошлого периода (+2, -1, 0)
+        private Integer change;
 
         @JsonProperty("isCurrentUser")
         private boolean isCurrentUser;

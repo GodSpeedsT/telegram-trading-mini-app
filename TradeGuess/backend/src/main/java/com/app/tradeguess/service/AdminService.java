@@ -29,10 +29,12 @@ public class AdminService {
         return userRepository.findAll().stream()
                 .map(this::convertToAdminResponse)
                 .sorted((u1, u2) -> {
-                    // Сначала админы, потом пользователи
-                    if (u1.getRole().startsWith("ROLE_ADMIN") && !u2.getRole().startsWith("ROLE_ADMIN")) {
+                    boolean u1IsAdmin = u1.getRole().isAdmin();
+                    boolean u2IsAdmin = u2.getRole().isAdmin();
+
+                    if (u1IsAdmin && !u2IsAdmin) {
                         return -1;
-                    } else if (!u1.getRole().startsWith("ROLE_ADMIN") && u2.getRole().startsWith("ROLE_ADMIN")) {
+                    } else if (!u1IsAdmin && u2IsAdmin) {
                         return 1;
                     }
                     return u1.getCreatedAt().compareTo(u2.getCreatedAt());
@@ -40,10 +42,8 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    // Назначить пользователя админом
     @Transactional
     public AdminUserResponse promoteToAdmin(String telegramUsername, Long currentAdminId) {
-        // 1. Проверяем права текущего админа
         User currentAdmin = userRepository.findById(currentAdminId)
                 .orElseThrow(() -> new RuntimeException("Администратор не найден"));
 
@@ -51,22 +51,18 @@ public class AdminService {
             throw new RuntimeException("Только SUPER_ADMIN может назначать администраторов");
         }
 
-        // 2. Очищаем username от @ если есть
         String cleanUsername = telegramUsername.startsWith("@")
                 ? telegramUsername.substring(1)
                 : telegramUsername;
 
-        // 3. Ищем пользователя по username
         User user = userRepository.findByUsernameIgnoreCase(cleanUsername)
                 .orElseThrow(() ->
                         new RuntimeException("Пользователь @" + cleanUsername + " не найден"));
 
-        // 4. Проверяем, не является ли уже админом
         if (user.getRole() == Role.ROLE_ADMIN || user.getRole() == Role.ROLE_SUPER_ADMIN) {
             throw new RuntimeException("Пользователь @" + cleanUsername + " уже является администратором");
         }
 
-        // 5. Меняем роль
         user.setRole(Role.ROLE_ADMIN);
         User savedUser = userRepository.save(user);
 
@@ -78,10 +74,8 @@ public class AdminService {
         return convertToAdminResponse(savedUser);
     }
 
-    // Понизить админа до пользователя
     @Transactional
     public AdminUserResponse demoteFromAdmin(Long userId, Long currentAdminId) {
-        // 1. Проверяем права
         User currentAdmin = userRepository.findById(currentAdminId)
                 .orElseThrow(() -> new RuntimeException("Администратор не найден"));
 
@@ -89,11 +83,9 @@ public class AdminService {
             throw new RuntimeException("Только SUPER_ADMIN может понижать администраторов");
         }
 
-        // 2. Находим пользователя
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // 3. Проверяем нельзя ли понизить
         if (user.getId().equals(currentAdminId)) {
             throw new RuntimeException("Нельзя понизить самого себя");
         }
@@ -106,7 +98,6 @@ public class AdminService {
             throw new RuntimeException("Пользователь уже является обычным пользователем");
         }
 
-        // 4. Понижаем
         user.setRole(Role.ROLE_USER);
         User savedUser = userRepository.save(user);
 

@@ -49,12 +49,12 @@ INSERT INTO chart_segments (display_candles, result_candles, price_at_decision, 
 
 INSERT INTO users (telegram_id,username,first_name,roles,created_at) VALUES
 (
-        123456789,
-        'TARANTAS',
+        934084397,
+        'GodSpeed_Ok',
         'Admin',
         'ROLE_SUPER_ADMIN',
         NOW()
-) ON CONFLICT (telegram_id) DO UPDATE SET role = 'ROLE_SUPER_ADMIN';
+) ON CONFLICT (telegram_id) DO UPDATE SET roles = 'ROLE_SUPER_ADMIN';
 
 CREATE INDEX idx_attempts_user ON guess_attempts(user_id);
 CREATE INDEX idx_attempts_time ON guess_attempts(attempted_at);

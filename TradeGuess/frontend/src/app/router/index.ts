@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { menu } from '@/pages/menu'
+import { MainMenu } from '@/pages/menu'
 import {chart} from '@/pages/chart'
 import RealTimeCandlestickChart from '@/pages/test/RealTimeCandlestickChart.vue'
 
@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'menu',
-      component: menu,
+      component: MainMenu,
     },
     {
       path: '/chart',

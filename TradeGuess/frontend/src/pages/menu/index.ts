@@ -1,2 +1,2 @@
-import menu from './menu.vue';
-export { menu };
+import MainMenu from './MainMenu.vue';
+export { MainMenu };

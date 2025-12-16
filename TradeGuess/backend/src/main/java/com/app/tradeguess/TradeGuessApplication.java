@@ -18,7 +18,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class TradeGuessApplication implements CommandLineRunner {
 
     private final BinanceDataService binanceDataService;
-
     public static void main(String[] args) {
 
         SpringApplication.run(TradeGuessApplication.class, args);
@@ -32,6 +31,7 @@ public class TradeGuessApplication implements CommandLineRunner {
             log.info("Загрузка данных завершена. Приложение продолжает работу...");
         }
     }
+
 }
 
 

@@ -8,25 +8,27 @@ import jakarta.persistence.Converter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Converter(autoApply = true)
+@Converter
 @Component
 @RequiredArgsConstructor
-public class JsonbConverter implements AttributeConverter<String,String> {
+public class JsonbConverter implements AttributeConverter<String, String> {
 
     private final ObjectMapper objectMapper;
 
     @Override
     public String convertToDatabaseColumn(String attribute) {
         try {
-            if(attribute == null) return null;
-            objectMapper.readTree(attribute);
+            if (attribute == null) return null;
+            if (attribute.trim().startsWith("[") || attribute.trim().startsWith("{")) {
+                objectMapper.readTree(attribute);
+            }
             return attribute;
         } catch (JsonMappingException e) {
             throw new RuntimeException(e);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return attribute;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid json",e);
+            throw new IllegalArgumentException("Invalid json", e);
         }
     }
 

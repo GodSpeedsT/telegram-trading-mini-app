@@ -15,7 +15,6 @@ declare global {
 
 const app = createApp(App)
 
-// Telegram Mini App
 if (window.Telegram?.WebApp) {
   const tg = window.Telegram.WebApp
   tg.expand()
@@ -26,4 +25,5 @@ if (window.Telegram?.WebApp) {
 app.use(createPinia())
 app.use(router)
 app.use(echartsPlugin)
+
 app.mount('#app')

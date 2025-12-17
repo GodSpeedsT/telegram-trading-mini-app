@@ -44,53 +44,28 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
-import VChart from 'vue-echarts';
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import {
-  GridComponent,
-  TooltipComponent,
-  TitleComponent,
-  DataZoomComponent
-} from 'echarts/components';
-import { CandlestickChart } from 'echarts/charts';
-
-import { marketModel } from '../../../entities/market-data/model/market-model';
-import type {
-  AssetData,
-  AssetWithMeta,
-  AssetInfo,
-  HistoricalDatasets,
-  VolatilityLevel
-} from '../../../shared/types/market';
-
-// Инициализация ECharts
-use([
-  CanvasRenderer,
-  GridComponent,
-  TooltipComponent,
-  TitleComponent,
-  DataZoomComponent,
-  CandlestickChart
-]);
+  historicalDatasets,
+  getRandomAsset
+} from '@/features/chartDataService';
 
 // Реактивные данные
-const selectedCategory = ref<keyof HistoricalDatasets>('crypto');
-const selectedAsset = ref<string>('bitcoin');
-const displayedCandles = ref<number>(100);
-const chartOption = ref<any>(null);
-const currentAsset = ref<AssetData | null>(null);
+const selectedCategory = ref('crypto');
+const selectedAsset = ref('bitcoin');
+const displayedCandles = ref(100);
+const chartOption = ref(null);
+const currentAsset = ref(null);
 
 // Лейблы
 const categoryLabels = {
   crypto: 'Криптовалюта',
   stocks: 'Акции',
   forex: 'Forex'
-} as const;
+};
 
-const volatilityLabels: Record<VolatilityLevel, string> = {
+const volatilityLabels = {
   'low': 'Низкая',
   'medium': 'Средняя',
   'high': 'Высокая',
@@ -98,14 +73,17 @@ const volatilityLabels: Record<VolatilityLevel, string> = {
 };
 
 // Доступные активы
-const availableAssets = computed<AssetWithMeta[]>(() => {
-  return marketModel.getAllAssets()
-    .filter(asset => asset.category === selectedCategory.value);
+const availableAssets = computed(() => {
+  const assets = historicalDatasets[selectedCategory.value];
+  return Object.keys(assets).map(key => ({
+    assetKey: key,
+    ...assets[key]
+  }));
 });
 
 // Загрузка данных актива
 const loadAssetData = () => {
-  const asset = marketModel.getAsset(selectedCategory.value, selectedAsset.value);
+  const asset = historicalDatasets[selectedCategory.value]?.[selectedAsset.value];
   if (asset) {
     currentAsset.value = asset;
     initializeChart();
@@ -116,16 +94,9 @@ const loadAssetData = () => {
 const initializeChart = () => {
   if (!currentAsset.value?.data?.length) return;
 
-  const chartData = marketModel.getChartData(
-    selectedCategory.value,
-    selectedAsset.value,
-    displayedCandles.value
-  );
-
-  if (!chartData) return;
-
-  const xAxisData = chartData.data.map(candle => candle.date);
-  const seriesData = chartData.data.map(candle => [
+  const dataToShow = currentAsset.value.data.slice(0, displayedCandles.value);
+  const xAxisData = dataToShow.map(candle => candle.date);
+  const seriesData = dataToShow.map(candle => [
     candle.open,
     candle.close,
     candle.low,
@@ -152,9 +123,9 @@ const initializeChart = () => {
       axisPointer: {
         type: 'cross'
       },
-      formatter: (params: any[]) => {
+      formatter: (params) => {
         const candleIndex = params[0].dataIndex;
-        const candle = chartData.data[candleIndex];
+        const candle = dataToShow[candleIndex];
         const change = ((candle.close - candle.open) / candle.open * 100).toFixed(2);
 
         return `
@@ -183,7 +154,7 @@ const initializeChart = () => {
       },
       axisLabel: {
         color: '#aaa',
-        formatter: (value: string) => {
+        formatter: (value) => {
           const date = new Date(value);
           return `${date.getDate()}.${date.getMonth() + 1}`;
         }
@@ -200,7 +171,7 @@ const initializeChart = () => {
       },
       axisLabel: {
         color: '#aaa',
-        formatter: (value: number) => formatPrice(value)
+        formatter: (value) => formatPrice(value)
       },
       splitLine: {
         lineStyle: {
@@ -250,13 +221,13 @@ const initializeChart = () => {
 };
 
 // Форматирование
-const formatPrice = (price: number): string => {
+const formatPrice = (price) => {
   if (!price) return 'N/A';
   return selectedCategory.value === 'forex' ?
     price.toFixed(4) : price.toFixed(2);
 };
 
-const formatVolume = (volume: number): string => {
+const formatVolume = (volume) => {
   if (!volume) return 'N/A';
   if (volume >= 1e9) return `$${(volume / 1e9).toFixed(2)}B`;
   if (volume >= 1e6) return `$${(volume / 1e6).toFixed(2)}M`;
@@ -273,7 +244,7 @@ const onCategoryChange = () => {
 };
 
 const loadRandomAsset = () => {
-  const random = marketModel.getRandomAsset();
+  const random = getRandomAsset();
   selectedCategory.value = random.category;
   selectedAsset.value = random.assetKey;
   loadAssetData();
@@ -326,7 +297,6 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
 }
 
 button:hover {

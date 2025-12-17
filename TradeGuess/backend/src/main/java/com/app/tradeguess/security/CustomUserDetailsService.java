@@ -2,13 +2,14 @@ package com.app.tradeguess.security;
 
 import com.app.tradeguess.model.entity.User;
 import com.app.tradeguess.repository.UserRepository;
-import com.app.tradeguess.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -17,21 +18,25 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByTelegramId(Long.parseLong(username))
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with telegramId: " + username));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        return UserPrincipal.create(user);
+        return createUserDetails(user);
     }
 
-    @Transactional
-    public UserDetails loadUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with id: " + id));
+    public UserDetails loadUserByTelegramId(Long telegramId) throws UsernameNotFoundException {
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with telegramId: " + telegramId));
 
-        return UserPrincipal.create(user);
+        return createUserDetails(user);
+    }
+
+    private UserDetails createUserDetails(User user) {
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                "",
+                Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
+        );
     }
 }

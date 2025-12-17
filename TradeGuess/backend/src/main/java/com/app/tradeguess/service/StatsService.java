@@ -1,25 +1,96 @@
 package com.app.tradeguess.service;
 
+import com.app.tradeguess.model.dto.response.StatsResponse;
+import com.app.tradeguess.model.entity.GuessAttempt;
 import com.app.tradeguess.repository.GuessAttemptRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StatsService {
     private final GuessAttemptRepository guessAttemptRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
-    public Map<String,Object> getUserStats(Long userId) {
-        Long total = guessAttemptRepository.countByUserId(userId);
-        Long correct = guessAttemptRepository.countByUserIdAndIsCorrect(userId, true);
-        Double accuracy = total > 0 ? (correct * 100.0 / total) : 0.0;
+    @Cacheable(value = "userStats", key = "#userId")
+    public StatsResponse getUserStats(Long userId) {
+        log.info("Calculating stats for user {}", userId);
 
-        return Map.of(
-          "totalAttempts", total,
-          "correctAttempts", correct,
-          "accuracy", String.format("%.1f%%", accuracy)
-        );
+        Long totalAttempts = guessAttemptRepository.countByUserId(userId);
+        Long correctAttempts = guessAttemptRepository.countByUserIdAndIsCorrect(userId, true);
+        Double accuracy = totalAttempts > 0 ?
+                (correctAttempts * 100.0 / totalAttempts) : 0.0;
+
+        Integer dailyAttempts = getDailyAttempts(userId);
+        Integer currentStreak = calculateCurrentStreak(userId);
+        Integer bestStreak = calculateBestStreak(userId);
+
+        return StatsResponse.builder()
+                .totalAttempts(totalAttempts)
+                .correctAttempts(correctAttempts)
+                .accuracy(Math.round(accuracy * 100.0) / 100.0)
+                .dailyAttempts(dailyAttempts)
+                .attemptsLeft(Math.max(0, 10 - dailyAttempts))
+                .currentStreak(currentStreak)
+                .bestStreak(bestStreak)
+                .build();
+    }
+
+    @CacheEvict(value = "userStats", key = "#userId")
+    public void evictUserStatsCache(Long userId) {
+        log.info("Evicting stats cache for user {}", userId);
+    }
+
+    private Integer getDailyAttempts(Long userId) {
+        String key = "user:" + userId + ":attempts:" + LocalDate.now();
+        String attempts = redisTemplate.opsForValue().get(key);
+        return attempts != null ? Integer.parseInt(attempts) : 0;
+    }
+
+    private Integer calculateBestStreak(Long userId) {
+        List<GuessAttempt> attempts = guessAttemptRepository.findAllByUserIdOrderByAttemptedAtDesc(userId);
+
+        int bestStreak = 0;
+        int currentStreak = 0;
+
+        for (GuessAttempt attempt : attempts) {
+            if (Boolean.TRUE.equals(attempt.getIsCorrect())) {
+                currentStreak++;
+                bestStreak = Math.max(bestStreak, currentStreak);
+            } else {
+                currentStreak = 0;
+            }
+        }
+
+        return bestStreak;
+    }
+
+    private Integer calculateCurrentStreak(Long userId) {
+        List<GuessAttempt> attempts = guessAttemptRepository.findAllByUserIdOrderByAttemptedAtDesc(userId);
+
+        int currentStreak = 0;
+
+        for (GuessAttempt attempt : attempts) {
+            if (Boolean.TRUE.equals(attempt.getIsCorrect())) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+
+        return currentStreak;
+    }
+
+    @CacheEvict(value = "userStats", key = "#userId")
+    public void evictUserStats(Long userId) {
+        log.info("Evicting stats cache for user {}", userId);
     }
 }

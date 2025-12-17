@@ -7,14 +7,11 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "build-only": "vite build",
+    "build": "vue-tsc && vite build",
+    "docker:build": "docker build -f ../docker/Dockerfile -t tradeguess-frontend .",
+    "docker:run": "docker run -p 3000:80 tradeguess-frontend",
     "type-check": "vue-tsc --build",
-    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
-    "lint:eslint": "eslint . --fix --cache",
-    "lint": "run-s lint:*"
+    "lint": "eslint . --fix --cache"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",

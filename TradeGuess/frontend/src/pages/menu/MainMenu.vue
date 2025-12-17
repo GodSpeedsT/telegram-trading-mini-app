@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen flex flex-col justify-center items-center">
+  <div class="min-h-screen flex flex-col justify-center items-center   ">
+   <div class="border-2 rounded-xl  flex flex-col  justify-center items-center gap-10 w-200 min-w-[250px]  sm:min-w-[300px] md:min-w-[350px] lg:border-4 lg:min-w-[400px] px-4 py-6 lg:border-4 shadow-sm sm:shadow-md md:shadow-lg lg:shadow-2xl xl:shadow-2xl  transition delay-300 ease-in-out">
     <div class="flex flex-col items-center gap-3 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-7 py-5 sm:py-5 md:py-6 lg:py-7 xl:py-8 2xl:py-9">
       <div class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 lg:border-4 xl:w-40 xl:h-40 2xl:w-44 2xl:h-44 rounded-full bg-zinc-800 border-2 border-zinc-600 flex items-end justify-center overflow-hidden shadow-lg">
         <svg class="h-5/6 w-5/6 text-zinc-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -42,7 +43,7 @@
           <span class="text-zinc-400 font-medium text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl">Задания и награды</span>
         </div>
       </button>
-      <button @click="account" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px]">
+      <button @click="account" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px] mb-8">
         <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-blue-400 bg-blue-500/10 rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-7 lg:h-7 xl:w-8 xl:h-8 2xl:w-9 2xl:h-9">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -53,6 +54,7 @@
           <span class="text-zinc-400 font-medium text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl">Профиль и статистика</span>
         </div>
       </button>
+    </div>
     </div>
   </div>
 </template>

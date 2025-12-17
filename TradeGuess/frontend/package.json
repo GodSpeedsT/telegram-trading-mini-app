@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "vue-tsc && vite build",
+    "dev": "vite",
     "docker:build": "docker build -f ../docker/Dockerfile -t tradeguess-frontend .",
     "docker:run": "docker run -p 3000:80 tradeguess-frontend",
     "type-check": "vue-tsc --build",

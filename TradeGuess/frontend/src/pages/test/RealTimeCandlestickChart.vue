@@ -141,6 +141,23 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
 import { getMarketData, getHistoricalData } from '@/features/apiService';
+import router from '@/app/router/index.js';
+
+function mainmenu() {
+  router.push({ path: ' ' });
+}
+
+function trainer() {
+  router.push({ path: '/chart' });
+}
+
+function achievements() {
+  router.push({ path: '/test' });
+}
+
+function account() {
+  router.push({ path: '/test' });
+}
 
 // Состояние
 const status = ref('loading'); // 'loading', 'error', 'ready'

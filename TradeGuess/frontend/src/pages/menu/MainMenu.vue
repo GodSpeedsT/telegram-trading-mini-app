@@ -59,31 +59,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Статистика внизу -->
-    <div class="relative z-10 mt-8 sm:mt-10 w-full max-w-md bg-gradient-to-r from-zinc-800/30 to-zinc-900/30 backdrop-blur-sm border border-zinc-700/50 rounded-2xl p-4">
-      <div class="grid grid-cols-3 gap-4 text-center">
-        <div>
-          <div class="text-2xl font-bold text-emerald-400">0</div>
-          <div class="text-xs text-zinc-400">Очков</div>
-        </div>
-        <div>
-          <div class="text-2xl font-bold text-purple-400">0</div>
-          <div class="text-xs text-zinc-400">Торгов</div>
-        </div>
-        <div>
-          <div class="text-2xl font-bold text-yellow-400">0%</div>
-          <div class="text-xs text-zinc-400">Точность</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Анимация точек -->
-    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
-      <div class="w-2 h-2 bg-emerald-400/60 rounded-full animate-pulse" style="animation-delay: 0s"></div>
-      <div class="w-2 h-2 bg-purple-400/60 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-      <div class="w-2 h-2 bg-blue-400/60 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
-    </div>
   </div>
 </template>
 

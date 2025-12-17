@@ -1,64 +1,19 @@
 version: latest
 
 services:
-  postgres:
-    image: postgres:latest
-    container_name: tradeguess-postgres
-    environment:
-      POSTGRES_DB: tradeguess
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  backend:
+    image: tradeguess-backend:latest
+    build: .
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql
-      - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - tradeguess-network  # Добавлено
+      - "8080:8080"
+    env_file: .env
+    restart: always
 
-  redis:
-    image: redis:7-alpine
-    container_name: tradeguess-redis
+  frontend:
+    image: tradeguess-frontend:latest
+    build: ./frontend
     ports:
-      - "6379:6379"
-    command: redis-server --requirepass redispass123
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - tradeguess-network
-
-  # Бэкенд (раскомментируйте когда будете готовы)
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   container_name: tradeguess-backend
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     SPRING_PROFILES_ACTIVE: docker
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - tradeguess-network
-
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:  # ДОБАВЬТЕ этот блок
-  tradeguess-network:
-    driver: bridge
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: always

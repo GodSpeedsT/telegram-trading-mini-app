@@ -1,16 +1,13 @@
-FROM maven:3.9-eclipse-temurin-17 AS builder
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN mvn -q -e -U -DskipTests package || true
+COPY src ./src
+RUN mvn -q -DskipTests package
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=builder /root/.m2 /root/.m2
-COPY --from=builder /app/pom.xml .
-RUN apk add --no-cache bash
-COPY mvnw .
-COPY .mvn .mvn
-RUN chmod +x mvnw
-
+COPY --from=build /app/target/*.jar app.jar
+ENV JAVA_OPTS="-Xms256m -Xmx512m"
 EXPOSE 8080
-CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"]
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar app.jar"]

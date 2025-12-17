@@ -134,28 +134,7 @@
         </div>
       </div>
     </div>
-    <div> 
-    
-    </div>
-    
-    
   </div>
-   <!-- Кнопки в footer-->
-  <div class=" flex flex-row bg-black border-2 justify-center items-center h-34 gap-20 ">
-  <button @click="mainmenu" class="text-2xl relative w-75 h-22 bg-zinc-700 hover:bg-green-800 border border-zinc-700 hover:border-green-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 " >
-      <span class="font-bold">Главная</span>
-    </button>
-<button @click="trainer" class="text-2xl relative w-75 h-22 bg-zinc-700 hover:bg-green-800 border border-zinc-700 hover:border-green-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300  active:scale-95 ">
-      <span class="font-bold">Тренажер</span>
-    </button>
-<button @click="achievements" class="text-2xl relative w-75 h-22 bg-zinc-700 hover:bg-green-800 border border-zinc-700 hover:border-green-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300  active:scale-95 ">
-    <span class="font-bold">  Достижения </span>
-    </button>
-<button @click="account" class="text-2xl relative w-75 h-22 bg-zinc-700 hover:bg-green-800 border border-zinc-700 hover:border-green-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 ">
-      <span class="font-bold">Аккаунт</span>
-    </button>
-
-    </div>
 </template>
 
 <script setup>

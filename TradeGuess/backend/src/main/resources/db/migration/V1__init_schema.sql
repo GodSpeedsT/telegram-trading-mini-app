@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
                        telegram_id BIGINT UNIQUE NOT NULL,
                        username VARCHAR(255),
                        first_name VARCHAR(255),
+                       roles VARCHAR(50),
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -45,6 +46,15 @@ INSERT INTO chart_segments (display_candles, result_candles, price_at_decision, 
     177.00,
     -1
 );
+
+INSERT INTO users (telegram_id,username,first_name,roles,created_at) VALUES
+(
+        934084397,
+        'GodSpeed_Ok',
+        'Admin',
+        'ROLE_SUPER_ADMIN',
+        NOW()
+) ON CONFLICT (telegram_id) DO UPDATE SET roles = 'ROLE_SUPER_ADMIN';
 
 CREATE INDEX idx_attempts_user ON guess_attempts(user_id);
 CREATE INDEX idx_attempts_time ON guess_attempts(attempted_at);

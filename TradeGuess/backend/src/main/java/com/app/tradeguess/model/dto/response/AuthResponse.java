@@ -1,5 +1,6 @@
 package com.app.tradeguess.model.dto.response;
 
+import com.app.tradeguess.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,4 +17,5 @@ public class AuthResponse {
     private String firstName;
     private String token;
     private boolean isNewUser;
+    private Role role;
 }

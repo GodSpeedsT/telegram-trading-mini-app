@@ -5,8 +5,12 @@ import com.app.tradeguess.model.dto.response.AuthResponse;
 import com.app.tradeguess.model.entity.User;
 import com.app.tradeguess.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -21,11 +25,36 @@ public class UserService {
                 .username(user.getUsername())
                 .firstName(user.getFirstName())
                 .token(generateToken(user.getId()))
-                .isNewUser(false)
+                .isNewUser(isNewUser(user))
                 .build();
     }
 
-    public String generateToken(Long id) {
-        return "user-token-" + id + "-" + System.currentTimeMillis();
+    public User findOrCreateUser(AuthRequest request) {
+        return userRepository.findByTelegramId(request.getTelegramId())
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setTelegramId(request.getTelegramId());
+                    newUser.setUsername(request.getUsername());
+                    newUser.setFirstName(request.getFirstName());
+                    newUser.setCreatedAt(LocalDateTime.now());
+                    return userRepository.save(newUser);
+                });
+    }
+
+    public User findByUsername(String telegramUsername) {
+        return new User();
+    }
+
+    private String generateToken(Long userId) {
+        return "tg-" + userId + "-" + System.currentTimeMillis();
+    }
+
+    private boolean isNewUser(User user) {
+        return user.getCreatedAt().isAfter(LocalDateTime.now().minusDays(4));
+    }
+
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
     }
 }

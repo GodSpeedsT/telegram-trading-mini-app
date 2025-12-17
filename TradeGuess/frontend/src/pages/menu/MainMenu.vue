@@ -1,10 +1,12 @@
 <template>
-  <div class="min-h-screen flex flex-col justify-center items-center p-4">
-    <div class="relative w-full flex flex-col items-center overflow-hidden bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] max-w-[340px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] 2xl:max-w-[800px] pt-6 sm:pt-8 md:pt-10 lg:pt-12 xl:pt-14 2xl:pt-16 pb-8 sm:pb-10 md:pb-12 lg:pb-14 xl:pb-16 2xl:pb-20 rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] 2xl:rounded-[60px]">
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent opacity-50"></div>
-      <div class="flex flex-col items-center gap-3 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-7 mb-6 sm:mb-7 md:mb-8 lg:mb-9 xl:mb-10 2xl:mb-12">
+  <div class="min-h-screen flex flex-col justify-center items-center p-4 relative bg-zinc-950 overflow-hidden">
+    <div class="absolute inset-0 w-full h-full bg-puzzle-pattern pointer-events-none"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none"></div>
+    <div class="relative z-10 w-full flex flex-col items-center overflow-hidden bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] max-w-[340px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] 2xl:max-w-[800px] pt-6 sm:pt-8 md:pt-10 lg:pt-12 xl:pt-14 2xl:pt-16 pb-8 sm:pb-10 md:pb-12 lg:pb-14 xl:pb-16 2xl:pb-20 rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] 2xl:rounded-[60px]">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent opacity-50 animate-pulse"></div>
+      <div class="flex flex-col items-center gap-3 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-7 pb-6 sm:pb-7 md:pb-8 lg:pb-9 xl:pb-10 2xl:pb-12">
         <div class="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 lg:border-4 xl:w-40 xl:h-40 2xl:w-44 2xl:h-44 rounded-full bg-zinc-800 border-2 border-zinc-600 flex items-end justify-center overflow-hidden shadow-lg">
-          <svg class="h-5/6 w-5/6 text-zinc-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg class="h-5/6 w-5/6 text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
             <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
           </svg>
         </div>
@@ -79,3 +81,12 @@ function account() {
   router.push({ path: '/test' });
 }
 </script>
+
+<style>
+.bg-puzzle-pattern {
+  background-color: #09090b;
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpath id='p' d='M-2 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M-2 100 v35 a15 15 0 0 0 0 30 v37 M98 0 v35 a15 15 0 0 0 0 30 v70 a15 15 0 0 1 0 30 v37 M198 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M0 -2 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37 M0 98 h35 a15 15 0 0 0 30 0 h70 a15 15 0 0 1 30 0 h37 M0 198 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37' stroke-linecap='square' stroke-linejoin='round' fill='none'/%3E%3C/defs%3E%3C!-- Shadow Layer (Black) --%3E%3Cuse href='%23p' stroke='%23000000' stroke-width='4' opacity='0.6' transform='translate(1,1)'/%3E%3C!-- Highlight Layer (White) --%3E%3Cuse href='%23p' stroke='%23ffffff' stroke-width='1.5' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+  background-repeat: repeat;
+}
+</style>

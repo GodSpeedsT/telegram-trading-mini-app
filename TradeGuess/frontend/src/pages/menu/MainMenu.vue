@@ -61,11 +61,11 @@
 import router from '@/app/router/index.js'
 
 function market() {
-  router.push({ path: '/chart' });
+  router.push({ path: '/test' });
 }
 
 function trainer() {
-  router.push({ path: '/test' });
+  router.push({ path: '/chart' });
 }
 
 function achievements() {

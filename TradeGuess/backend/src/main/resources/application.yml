@@ -16,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
     properties:
@@ -38,6 +38,8 @@ spring:
       ssl:
         enabled: true
       timeout: 5000ms
+      repositories:
+        enabled: false
       lettuce:
         pool:
           max-active: 8
@@ -73,7 +75,7 @@ token:
     expire: 86400000
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /
   compression:
@@ -111,8 +113,6 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/application.log
-    max-size: 10MB
-    max-history: 30
 
 cors:
   allowed-origins: https://web.telegram.org

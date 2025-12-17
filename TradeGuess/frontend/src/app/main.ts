@@ -5,7 +5,6 @@ import App from './App.vue'
 import router from './router'
 import "../style.css"
 
-// Типизация для Telegram WebApp
 declare global {
   interface Window {
     Telegram: {
@@ -48,11 +47,14 @@ declare global {
 
 const app = createApp(App)
 
-// Настройка Pinia store для Telegram
-const pinia = createPinia()
+if (window.Telegram?.WebApp) {
+  const tg = window.Telegram.WebApp
+  tg.expand()
+  tg.setHeaderColor('#2b6cb0')
+  tg.setBackgroundColor('#f7fafc')
+}
 
-// Плагин для доступа к Telegram WebApp в компонентах
-app.use(pinia)
+app.use(createPinia())
 app.use(router)
 app.use(echartsPlugin)
 

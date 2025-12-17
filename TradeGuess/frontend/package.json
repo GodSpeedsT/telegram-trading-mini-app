@@ -8,10 +8,17 @@
   },
   "scripts": {
     "build": "vue-tsc && vite build",
+    "dev": "vite",
     "docker:build": "docker build -f ../docker/Dockerfile -t tradeguess-frontend .",
     "docker:run": "docker run -p 3000:80 tradeguess-frontend",
+    "build:vue": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix --cache"
+    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
+    "lint:eslint": "eslint . --fix --cache",
+    "lint": "run-s lint:*",
+    "lint:vue": "eslint . --fix --cache"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",

@@ -107,8 +107,12 @@ onMounted(() => {
     userName.value = user.first_name || 'Гость'
 
     // ✅ Генерируем аватар по имени (Telegram не дает photo_url)
-    if (user.first_name) {
-      userAvatar.value = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=2b6cb0&color=fff&size=128&bold=true&font-size=0.6`
+    if (user.photo_url) {
+      userAvatar.value = user.photo_url
+    } else if (user.first_name) {
+      // fallback, если вдруг аватарки нет
+      userAvatar.value =
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=2b6cb0&color=fff&size=128&bold=true&font-size=0.6`
     }
   }
 })

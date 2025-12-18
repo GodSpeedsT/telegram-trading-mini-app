@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { MainMenu } from '@/pages/menu'
-import {chart} from '@/pages/chart'
+import {TradeGame} from '@/pages/chart'
 import RealTimeCandlestickChart from '@/pages/test/RealTimeCandlestickChart.vue'
 import Achivments from '@/pages/achivments/achivments.vue'
 
@@ -13,9 +13,9 @@ const router = createRouter({
       component: MainMenu,
     },
     {
-      path: '/chart',
+      path: '/TradeGame',
       name: 'chart',
-      component: chart,
+      component: TradeGame,
     },
     {
       path: '/test',

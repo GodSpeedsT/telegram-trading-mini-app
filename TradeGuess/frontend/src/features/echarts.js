@@ -33,6 +33,6 @@ use([
 export default {
   install(app) {
     // Регистрируем компонент глобально
-    app.component('v-chart', ECharts);
+    app.component('v-TradeGame', ECharts);
   }
 };

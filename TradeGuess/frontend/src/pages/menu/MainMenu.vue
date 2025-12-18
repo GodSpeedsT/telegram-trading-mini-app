@@ -70,7 +70,7 @@ function market() {
 }
 
 function trainer() {
-  router.push({ path: '/chart' });
+  router.push({ path: '/TradeGame' });
 }
 
 function achivements() {

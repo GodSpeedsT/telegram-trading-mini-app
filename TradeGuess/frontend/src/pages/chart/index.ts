@@ -1,2 +1,2 @@
-import chart from './chart.vue';
-export { chart };
+import TradeGame from './TradeGame.vue';
+export { TradeGame };

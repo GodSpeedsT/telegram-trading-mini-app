@@ -134,11 +134,11 @@
         </div>
       </div>
     </div>
-    <div> 
-    
+    <div>
+
     </div>
-    
-    
+
+
   </div>
    <!-- Кнопки в footer-->
   <div class=" flex flex-row bg-black border-2 justify-center items-center h-34 gap-20 ">
@@ -169,7 +169,7 @@ function mainmenu() {
 }
 
 function trainer() {
-  router.push({ path: '/chart' });
+  router.push({ path: '/TradeGame' });
 }
 
 function achivements() {
@@ -292,7 +292,7 @@ const loadChartData = async () => {
     // Инициализируем график
     setTimeout(initChart, 100);
   } catch (error) {
-    console.error('Failed to load chart data:', error);
+    console.error('Failed to load TradeGame data:', error);
     status.value = 'error';
   }
 };

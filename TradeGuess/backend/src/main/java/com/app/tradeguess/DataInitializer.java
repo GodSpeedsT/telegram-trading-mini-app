@@ -19,15 +19,19 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         try {
-            if (chartSegmentRepository.count() < 1000) {
+            long segmentCount = chartSegmentRepository.count();
+            log.info("Current segment count in DB: {}", segmentCount);
+
+            if (segmentCount < 100) {
                 log.info("Starting data initialization...");
                 binanceDataService.loadTestData();
+                log.info("Data initialization completed");
             } else {
-                log.info("В бд уже есть {} сегментов. Пропускаем загрузку.",
-                        chartSegmentRepository.count());
+                log.info("DB already has {} segments. Skipping data load.", segmentCount);
             }
         } catch (Exception e) {
-            log.error("Failed to load data, binance service send error", e.getMessage());
+            log.error("Data initialization failed, but continuing startup. Error: {}",
+                    e.getMessage(), e);
         }
     }
 }

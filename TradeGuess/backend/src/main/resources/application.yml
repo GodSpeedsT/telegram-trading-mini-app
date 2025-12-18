@@ -87,16 +87,21 @@ server:
     include-message: always
 
 management:
+  health:
+    redis:
+      enabled: false
+
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info
       base-path: /manage
   endpoint:
     health:
       show-details: when_authorized
       probes:
         enabled: true
+      show-components: always
   metrics:
     tags:
       application: tradeguess-bot

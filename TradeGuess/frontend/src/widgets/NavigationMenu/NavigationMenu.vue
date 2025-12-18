@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
     name: 'Рынок',
     icon: 'icon-market',
     activeIcon: 'icon-market-active',
-    route: '/test',
+    route: '/real-time',
     colorClass: 'green'
   },
   {
@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     name: 'Тренажер',
     icon: 'icon-trainer',
     activeIcon: 'icon-trainer-active',
-    route: '/chart',
+    route: '/trade-game',
     colorClass: 'purple'
   },
   {

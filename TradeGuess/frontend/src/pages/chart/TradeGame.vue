@@ -93,11 +93,11 @@
     </transition>
     <div class="fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-xl border-t border-white/5 z-40 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       <div class="flex justify-around items-center h-[70px] px-2">
-        <button @click="$router.push('/')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
+        <button @click="$router.push('/trade-game')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
           <svg class="w-6 h-6 text-zinc-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
           <span class="text-[10px] font-medium text-zinc-500 group-hover:text-zinc-300">Главная</span>
         </button>
-        <button @click="$router.push('/test')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
+        <button @click="$router.push('/real-time')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
           <svg class="w-6 h-6 text-zinc-500 group-hover:text-green-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
           <span class="text-[10px] font-medium text-zinc-500 group-hover:text-green-400">Live</span>
         </button>
@@ -106,11 +106,11 @@
           <svg class="w-7 h-7 text-purple-400 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span class="text-[10px] font-bold text-purple-400 relative z-10">Игра</span>
         </button>
-        <button @click="$router.push('/test')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
+        <button @click="$router.push('/achievements')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
           <svg class="w-6 h-6 text-zinc-500 group-hover:text-yellow-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
           <span class="text-[10px] font-medium text-zinc-500 group-hover:text-yellow-400">Награды</span>
         </button>
-        <button @click="$router.push('/test')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
+        <button @click="$router.push('/')" class="flex flex-col items-center justify-center gap-1 w-16 h-full group">
           <svg class="w-6 h-6 text-zinc-500 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           <span class="text-[10px] font-medium text-zinc-500 group-hover:text-zinc-300">Профиль</span>
         </button>

@@ -143,22 +143,6 @@ import * as echarts from 'echarts';
 import { getMarketData, getHistoricalData } from '@/features/apiService';
 import router from '@/app/router/index.js';
 
-function mainmenu() {
-  router.push({ path: ' ' });
-}
-
-function trainer() {
-  router.push({ path: '/TradeGame' });
-}
-
-function achivements() {
-  router.push({ path: '/achivments' });
-}
-
-function account() {
-  router.push({ path: '/test' });
-}
-
 // Состояние
 const status = ref('loading'); // 'loading', 'error', 'ready'
 const selectedMarket = ref('crypto');

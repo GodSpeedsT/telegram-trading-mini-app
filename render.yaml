@@ -8,6 +8,8 @@ services:
     envVars:
       - key: PORT
         value: 10000
+      - key: BINANCE_ENABLED
+        value: "false"
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_BOT_USERNAME

@@ -129,6 +129,8 @@ telegram:
     allowed-updates: message,callback_query,chat_member
 
 app:
+  binance:
+    enabled: ${BINANCE_ENABLED:false}
   rate-limit:
     enabled: true
     limit: 10

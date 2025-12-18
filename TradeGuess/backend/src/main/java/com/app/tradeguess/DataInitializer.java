@@ -24,14 +24,20 @@ public class DataInitializer implements ApplicationRunner {
 
             if (segmentCount < 100) {
                 log.info("Starting data initialization...");
-                binanceDataService.loadTestData();
-                log.info("Data initialization completed");
+                try {
+                    binanceDataService.loadTestData();
+                    log.info("Data initialization completed successfully");
+                } catch (Exception e) {
+                    log.warn("Failed to load data from Binance (likely geo-restriction). Continuing without historical data. Error: {}",
+                            e.getMessage());
+                    // Продолжаем работу с пустой/частичной базой
+                }
             } else {
                 log.info("DB already has {} segments. Skipping data load.", segmentCount);
             }
         } catch (Exception e) {
-            log.error("Data initialization failed, but continuing startup. Error: {}",
-                    e.getMessage(), e);
+            log.error("Unexpected error in DataInitializer: {}", e.getMessage(), e);
+            // НЕ выбрасываем исключение - приложение должно запуститься
         }
     }
 }

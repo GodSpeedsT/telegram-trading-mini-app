@@ -125,18 +125,18 @@ const getPulseStyle = (index: number) => {
 </script>
 
 <template>
-  <nav class=" bottom-0 left-0 right-0 z-50">
+  <nav class="top-0 bottom-0 left-0 right-0 z-50">
     <div
       class=" inset-0 bg-zinc-900/95 backdrop-blur-xl border-2 border-zinc-800/50 shadow-[0_-20px_80px_-12px_rgba(0,0,0,0.9)]"/>
     <div class="absolute bottom-0 h-[3px] rounded-t-full transition-all duration-500"
          :style="transitionStyle" :class="`bg-gradient-to-r ${activeColorClass}`"/>
     <div
-      class="absolute top-2 h-10 w-16 rounded-full blur-xl opacity-30 transition-all duration-700"
+      class="absolute bottom-3 h-10 w-16 rounded-full blur-xl opacity-30 transition-all duration-700"
       :style="{ left: glowPosition }" :class="`bg-gradient-to-r ${activeColorClass}`"/>
 
     <div class="relative flex justify-around items-center py-3">
       <div
-        class="absolute top-2 h-14 rounded-2xl transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]"
+        class="absolute top-2 h-16 rounded-2xl transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]"
         :style="transitionStyle" :class="`bg-gradient-to-r ${activeColorClass} opacity-20`"/>
 
       <button v-for="item in navItems" :key="item.id"

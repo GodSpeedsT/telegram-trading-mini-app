@@ -75,7 +75,7 @@ token:
     expire: 86400000
 
 server:
-  port: ${PORT:8080}
+  port: 8080
   servlet:
     context-path: /
   compression:

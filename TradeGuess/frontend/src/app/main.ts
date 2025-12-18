@@ -10,8 +10,7 @@ declare global {
     Telegram: {
       WebApp: {
         expand: () => void
-        setHeaderColor: (color: string) => void
-        setBackgroundColor: (color: string) => void
+        showAlert: (message: string, callback?: () => void) => void
         BackButton: {
           show: () => void
           hide: () => void
@@ -33,6 +32,7 @@ declare global {
             username?: string
             language_code?: string
             is_premium?: boolean
+            photo_url?: string
           }
           chat?: any
         }
@@ -50,8 +50,6 @@ const app = createApp(App)
 if (window.Telegram?.WebApp) {
   const tg = window.Telegram.WebApp
   tg.expand()
-  tg.setHeaderColor('#2b6cb0')
-  tg.setBackgroundColor('#f7fafc')
 }
 
 app.use(createPinia())

@@ -48,9 +48,10 @@ const navItems: NavItem[] = [
     name: 'Аккаунт',
     icon: 'icon-account',
     activeIcon: 'icon-account-active',
-    route: '/',
+    route: '/account',
     colorClass: 'blue'
   }
+  
 ]
 
 const itemWidth = computed(() => 100 / navItems.length)

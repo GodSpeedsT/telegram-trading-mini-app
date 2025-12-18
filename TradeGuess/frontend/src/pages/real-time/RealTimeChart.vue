@@ -141,7 +141,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
 import { getMarketData, getHistoricalData } from '@/features/apiService';
-import router from '@/app/router/index.js';
+
 
 // Состояние
 const status = ref('loading'); // 'loading', 'error', 'ready'
@@ -524,7 +524,7 @@ onUnmounted(() => {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  min-height: 600px;
+  min-height: 950px;
 }
 
 .status-message {

@@ -1,7 +1,7 @@
 <template>
   <!-- Главный контейнер -->
-  <div class="min-h-screen flex items-center justify-center p-4">
-    <!-- Блок достижений с возможностью кастомного фона -->
+  <div class="min-h-screen flex items-center justify-center p-4 bg-black-700">
+    <!-- Блок достижений -->
     <div 
       class="achievement-block relative w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:shadow-3xl"
       :style="{
@@ -10,23 +10,8 @@
         color: block.textColor || '#ffffff'
       }"
     >
-      <!-- Фоновое изображение с оверлеем -->
-      <div 
-        v-if="block.backgroundImage"
-        class="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        :style="{ backgroundImage: `url('${block.backgroundImage}')` }"
-      >
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
-      </div>
-      
-      <!-- Градиентный оверлей для текста -->
-      <div 
-        v-else-if="block.backgroundColor"
-        class="absolute inset-0 opacity-90"
-        :style="{ 
-          background: `linear-gradient(135deg, ${block.backgroundColor} 0%, ${darkenColor(block.backgroundColor, 20)} 100%)`
-        }"
-      ></div>
+      <!-- Градиентный фон для финансовой темы -->
+      <div class="absolute inset-0 bg-gradient-to-br from-green-900/30 via-zinc-900/80 to-black-900/30"></div>
       
       <!-- Контент блока -->
       <div class="relative z-10 p-8">
@@ -101,12 +86,6 @@
                   >
                     {{ achievement.title }}
                   </div>
-                  <div 
-                    v-else
-                    class="text-gray-400 italic text-sm"
-                  >
-                    [Нажмите, чтобы редактировать]
-                  </div>
                 </div>
                 
                 <!-- Описание -->
@@ -119,17 +98,6 @@
                 
                 <!-- Мета информация -->
                 <div class="flex flex-wrap gap-3 mt-3">
-                  <!-- Дата -->
-                  <div 
-                    v-if="achievement.date"
-                    class="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-white/10"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>{{ achievement.date }}</span>
-                  </div>
-                  
                   <!-- Категория -->
                   <div 
                     v-if="achievement.category"
@@ -178,17 +146,33 @@
           </div>
         </div>
         
-        <!-- Подсказки -->
-        <div class="mt-6 text-center text-sm opacity-70">
-          <p>💡 Нажмите на достижение, чтобы изменить его статус</p>
+        <!-- Статистика -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div class="bg-gray-800/30 rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-emerald-400">{{ unlockedCount }}</div>
+            <div class="text-sm text-gray-400">Разблокировано</div>
+          </div>
+          <div class="bg-gray-800/30 rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-cyan-400">{{ block.achievements.length }}</div>
+            <div class="text-sm text-gray-400">Всего достижений</div>
+          </div>
+          <div class="bg-gray-800/30 rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-400">{{ remainingCount }}</div>
+            <div class="text-sm text-gray-400">Осталось разблокировать</div>
+          </div>
+          <div class="bg-gray-800/30 rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-purple-400">{{ progressPercentage }}%</div>
+            <div class="text-sm text-gray-400">Прогресс</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+    </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+
 
 // ========== ТИПЫ ==========
 interface Achievement {
@@ -196,7 +180,6 @@ interface Achievement {
   title: string
   description?: string
   unlocked: boolean
-  date?: string
   category?: string
   progress?: number
 }
@@ -214,10 +197,7 @@ interface AchievementBlock {
 const block = ref<AchievementBlock>({
   title: 'Мои достижения',
   subtitle: 'Путь к успеху начинается здесь',
-  // Можно установить любой цвет фона
-  // backgroundColor: '#1e293b',
-  // Или использовать изображение
-  // backgroundImage: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=1200',
+  backgroundColor: '#1e293b',
   textColor: '#ffffff',
   
   achievements: [
@@ -226,16 +206,51 @@ const block = ref<AchievementBlock>({
       title: 'Первое достижение',
       description: 'Зайти в игру',
       unlocked: true,
-      date: '2024-01-15',
       category: 'Старт',
       progress: 100
     },
+    {
+      id: 2,
+      title: 'Первая прибыль',
+      description: 'Закрыть сделку с положительным результатом',
+      unlocked: true,
+      category: 'Старт',
+      progress: 100
+    },
+    {
+      id: 3,
+      title: 'Самодостаточный',
+      description: 'Закрыть 5 сделок подряд с положительным результатом',
+      unlocked: true,
+      category: 'Старт',
+      progress: 100
+    },
+    {
+      id: 4,
+      title: 'Миллионер',
+      description: 'Закрыть 15 сделок подряд с положительным результатом',
+      unlocked: true,
+      category: 'Старт',
+      progress: 100
+    },
+    {
+      id: 99,
+      title: 'Умнейший',
+      description: 'Выполните все достижения',
+      unlocked: true,
+      category: 'Старт',
+      progress: 100
+    }
   ]
 })
 
 // ========== ВЫЧИСЛЯЕМЫЕ СВОЙСТВА ==========
 const unlockedCount = computed(() => {
   return block.value.achievements.filter(a => a.unlocked).length
+})
+
+const remainingCount = computed(() => {
+  return block.value.achievements.length - unlockedCount.value
 })
 
 const progressPercentage = computed(() => {
@@ -252,11 +267,6 @@ const toggleAchievement = (id: number) => {
       achievement.progress = 100
     }
   }
-}
-
-const darkenColor = (color: string, percent: number): string => {
-  // Простая функция для затемнения цвета (для градиента)
-  return color // В реальном проекте добавьте логику изменения цвета
 }
 
 // ========== ХУКИ ==========

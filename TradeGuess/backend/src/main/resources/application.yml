@@ -85,7 +85,6 @@ server:
   error:
     include-stacktrace: never
     include-message: always
-  address: 0.0.0.0
 
 management:
   endpoints:

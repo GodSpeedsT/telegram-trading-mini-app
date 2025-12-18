@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -24,8 +25,16 @@ public class BinanceDataService {
     private final ChartSegmentRepository chartSegmentRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    @Value("${app.binance.enabled:true}")
+    private boolean binanceEnabled;
 
     public void loadHistoricalData(String symbol, String interval, int limit) {
+
+        if (!binanceEnabled) {
+            log.warn("Binance API calls are disabled, skipping load for {}/{}", symbol, interval);
+            return;
+        }
+
         log.info("Загрузка исторических данных для {}/{} (лимит: {})", symbol, interval, limit);
 
         try {
@@ -147,7 +156,14 @@ public class BinanceDataService {
         }
     }
 
+
     public void loadTestData() {
+
+        if (!binanceEnabled) {
+            log.warn("Binance data loading is disabled in this environment");
+            return;
+        }
+
         log.info("Загрузка тестовых данных...");
 
         try {

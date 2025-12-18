@@ -2,10 +2,14 @@ services:
   - type: web
     name: tradeguess-backend
     env: docker
-    dockerfilePath: ../backend/Dockerfile
-    dockerContext: .
+    dockerfilePath: ./TradeGuess/backend/Dockerfile
+    dockerContext: ./TradeGuess/backend
     plan: free
     envVars:
+      - key: PORT
+        value: 10000
+      - key: BINANCE_ENABLED
+        value: "false"
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_BOT_USERNAME
@@ -16,14 +20,11 @@ services:
   - type: web
     name: tradeguess-frontend
     env: docker
-    dockerfilePath: ./docker/Dockerfile
-    dockerContext: ./frontend
+    dockerfilePath: ./TradeGuess/frontend/Dockerfile
+    dockerContext: ./TradeGuess/frontend
     plan: free
     envVars:
       - key: VITE_API_URL
         value: https://tradeguess-backend.onrender.com
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+
     autoDeploy: true

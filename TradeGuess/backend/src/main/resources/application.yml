@@ -16,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
     properties:
@@ -38,6 +38,8 @@ spring:
       ssl:
         enabled: true
       timeout: 5000ms
+      repositories:
+        enabled: false
       lettuce:
         pool:
           max-active: 8
@@ -67,8 +69,13 @@ spring:
     restart:
       enabled: false
 
+token:
+  signin:
+    key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+    expire: 86400000
+
 server:
-  port: 8080
+  port: ${PORT:10000}
   servlet:
     context-path: /
   compression:
@@ -80,16 +87,21 @@ server:
     include-message: always
 
 management:
+  health:
+    redis:
+      enabled: false
+
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info
       base-path: /manage
   endpoint:
     health:
       show-details: when_authorized
       probes:
         enabled: true
+      show-components: always
   metrics:
     tags:
       application: tradeguess-bot
@@ -106,8 +118,6 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/application.log
-    max-size: 10MB
-    max-history: 30
 
 cors:
   allowed-origins: https://web.telegram.org
@@ -124,6 +134,8 @@ telegram:
     allowed-updates: message,callback_query,chat_member
 
 app:
+  binance:
+    enabled: ${BINANCE_ENABLED:false}
   rate-limit:
     enabled: true
     limit: 10

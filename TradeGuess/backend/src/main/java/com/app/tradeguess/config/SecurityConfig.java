@@ -36,6 +36,9 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/ping",
+                                "/manage/**",
                                 "/api/auth/**",
                                 "/api/game/test",
                                 "/api/leaderboard",

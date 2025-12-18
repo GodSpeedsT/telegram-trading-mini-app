@@ -1,31 +1,20 @@
-import { telegramWebApp } from '@/app/main.ts'; // Из вашего main.ts
-
-interface AuthData {
-  telegramId: number;
-  username?: string;
-  firstName?: string;
-}
+import {telegramWebApp} from '@/app/main.ts'
 
 export const authenticate = async () => {
   const tg = telegramWebApp;
-  const user = tg?.initDataUnsafe?.user;
 
-  if (!user) {
-    throw new Error('Пользователь не найден в Telegram');
+  if (!tg?.initDataUnsafe) {
+    throw new Error('Нет initData от Telegram');
   }
-
-  const authData: AuthData = {
-    telegramId: user.id,           // 93435467
-    username: user.username || '', // "GodSpeed"
-    firstName: user.first_name || '' // "pupupu"
-  };
 
   const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(authData)
+    body: JSON.stringify({
+      initData: tg.initDataUnsafe
+    })
   });
 
   if (!response.ok) {
@@ -34,9 +23,8 @@ export const authenticate = async () => {
 
   const data = await response.json();
 
-  // Сохраняем токен
-  if (data.success && data.data?.token) {
-    localStorage.setItem('token', data.data.token);
+  if (data.success && data.token) {
+    localStorage.setItem('token', data.token);
   }
 
   return data;

@@ -286,7 +286,7 @@ const initChart = (data: Candle[], showResultLine = false) => {
     backgroundColor: bgColor,
     grid: {
       left: 10,
-      right: 55,
+      right: 5,
       top: 40,
       bottom: 60,
       containLabel: false

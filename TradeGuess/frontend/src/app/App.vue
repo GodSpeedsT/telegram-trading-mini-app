@@ -27,11 +27,19 @@ const authenticateUser = async () => {
 
   const user = tg.initDataUnsafe.user
 
+  console.log('Тело запроса:', {
+    telegramId: user.id,
+    username: user.username || '',
+    firstName: user.first_name || '',
+    initData: tg.initData
+  })
+
   try {
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        initData: tg.initData,
         telegramId: user.id,
         username: user.username || '',
         firstName: user.first_name || ''

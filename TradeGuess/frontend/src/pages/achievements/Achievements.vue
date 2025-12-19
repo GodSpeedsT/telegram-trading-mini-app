@@ -1,186 +1,79 @@
 <template>
-  <!-- Главный контейнер -->
-  <div class="min-h-screen flex items-center justify-center p-4">
-    <!-- Блок достижений с возможностью кастомного фона -->
-    <div 
-      class="achievement-block relative w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:shadow-3xl"
-      :style="{
-        backgroundColor: block.backgroundColor,
-        backgroundImage: block.backgroundImage ? `url('${block.backgroundImage}')` : 'none',
-        color: block.textColor || '#ffffff'
-      }"
-    >
-      <!-- Фоновое изображение с оверлеем -->
-      <div 
-        v-if="block.backgroundImage"
-        class="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        :style="{ backgroundImage: `url('${block.backgroundImage}')` }"
-      >
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
-      </div>
+  <div class="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-zinc-950 font-sans text-white safe-area-padding pb-nav">
+    <div class="relative w-full max-w-4xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
+      <div class="absolute inset-0 bg-gradient-to-br from-green-900/20 via-zinc-900/80 to-black/50 pointer-events-none"></div>
       
-      <!-- Градиентный оверлей для текста -->
-      <div 
-        v-else-if="block.backgroundColor"
-        class="absolute inset-0 opacity-90"
-        :style="{ 
-          background: `linear-gradient(135deg, ${block.backgroundColor} 0%, ${darkenColor(block.backgroundColor, 20)} 100%)`
-        }"
-      ></div>
-      
-      <!-- Контент блока -->
-      <div class="relative z-10 p-8">
-        <!-- Заголовок блока -->
-        <div class="text-center mb-10">
-          <h1 class="text-4xl font-bold mb-3">
-            {{ block.title }}
-          </h1>
-          <p class="text-lg opacity-90">
-            {{ block.subtitle }}
-          </p>
-        </div>
-        
-        <!-- Список достижений -->
-        <div class="space-y-5">
-          <div 
-            v-for="achievement in block.achievements" 
-            :key="achievement.id"
-            class="achievement-item group relative p-5 rounded-2xl transition-all duration-400 cursor-pointer"
-            :class="[
-              achievement.unlocked 
-                ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/50' 
-                : 'bg-gradient-to-r from-gray-800/30 to-gray-900/30 border-gray-600/30',
-              'border backdrop-blur-sm hover:scale-[1.02] hover:shadow-xl'
-            ]"
-            @click="toggleAchievement(achievement.id)"
-          >
-            <!-- Эффект свечения для разблокированных -->
-            <div 
-              v-if="achievement.unlocked"
-              class="absolute inset-0 rounded-2xl bg-green-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            ></div>
+      <div class="relative z-10 p-4 sm:p-6 md:p-8 lg:p-10">
+        <!-- Header -->
+        <header class="text-center mb-6 sm:mb-8 md:mb-10">
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-black mb-2 tracking-tight leading-tight">{{ block.title }}</h1>
+          <p class="text-zinc-500 font-medium text-sm sm:text-base">{{ block.subtitle }}</p>
+        </header>
+
+        <!-- Achievements List -->
+        <div class="space-y-3 sm:space-y-4 max-h-[calc(100vh-320px)] sm:max-h-[calc(100vh-360px)] overflow-y-auto pr-1 custom-scrollbar">
+          <div v-for="achievement in achievements" :key="achievement.id"
+               class="group relative p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl border transition-all duration-300 backdrop-blur-md"
+               :class="achievement.unlocked ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-800/20 border-zinc-800'">
             
-            <div class="relative flex items-start gap-4">
-              <!-- Иконка статуса -->
-              <div class="flex-shrink-0">
-                <div 
-                  class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                  :class="achievement.unlocked 
-                    ? 'bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg shadow-green-500/30' 
-                    : 'bg-gradient-to-br from-gray-600 to-gray-800'"
-                >
-                  <svg 
-                    v-if="achievement.unlocked"
-                    class="w-6 h-6"
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <svg 
-                    v-else
-                    class="w-6 h-6 opacity-70"
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
+            <div class="flex items-start sm:items-center gap-3 sm:gap-4 md:gap-5">
+              <!-- Icon -->
+              <div class="shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg"
+                   :class="achievement.unlocked ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-zinc-800'">
+                <span class="text-xl sm:text-2xl">{{ achievement.unlocked ? '🏆' : '🔒' }}</span>
               </div>
-              
-              <!-- Контент достижения -->
+
+              <!-- Content -->
               <div class="flex-1 min-w-0">
-                <!-- Название достижения -->
-                <div class="mb-2">
-                  <div 
-                    v-if="achievement.title.trim()"
-                    class="text-xl font-semibold"
-                    :class="achievement.unlocked ? 'text-white' : 'text-gray-300'"
-                  >
+                <!-- Title and Category -->
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2 mb-1">
+                  <h3 class="font-bold text-base sm:text-lg md:text-lg truncate"
+                      :class="achievement.unlocked ? 'text-white' : 'text-zinc-500'">
                     {{ achievement.title }}
-                  </div>
-                  <div 
-                    v-else
-                    class="text-gray-400 italic text-sm"
-                  >
-                    [Нажмите, чтобы редактировать]
-                  </div>
-                </div>
-                
-                <!-- Описание -->
-                <div 
-                  v-if="achievement.description"
-                  class="text-sm opacity-90 mb-3"
-                >
-                  {{ achievement.description }}
-                </div>
-                
-                <!-- Мета информация -->
-                <div class="flex flex-wrap gap-3 mt-3">
-                  <!-- Дата -->
-                  <div 
-                    v-if="achievement.date"
-                    class="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-white/10"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>{{ achievement.date }}</span>
-                  </div>
-                  
-                  <!-- Категория -->
-                  <div 
-                    v-if="achievement.category"
-                    class="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20"
-                  >
+                  </h3>
+                  <span class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-500 font-black uppercase tracking-widest self-start sm:self-auto">
                     {{ achievement.category }}
+                  </span>
+                </div>
+
+                <!-- Description -->
+                <p class="text-xs sm:text-sm text-zinc-500 leading-snug line-clamp-2 sm:line-clamp-none">
+                  {{ achievement.description }}
+                </p>
+
+                <!-- Progress Bar (for non-boolean achievements) -->
+                <div v-if="achievement.type !== 'boolean'" class="mt-3 sm:mt-4">
+                  <div class="flex justify-between text-[9px] sm:text-[10px] font-black text-zinc-600 mb-1.5 uppercase">
+                    <span>Прогресс</span>
+                    <span>{{ achievement.progress }} / {{ achievement.maxProgress }}</span>
                   </div>
-                </div>
-              </div>
-              
-              <!-- Бейдж прогресса -->
-              <div 
-                v-if="achievement.progress !== undefined"
-                class="flex-shrink-0 w-24"
-              >
-                <div class="text-right text-sm mb-1">
-                  {{ achievement.progress }}%
-                </div>
-                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    class="h-full bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full transition-all duration-500"
-                    :style="{ width: `${achievement.progress}%` }"
-                  ></div>
+                  <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-emerald-500 transition-all duration-1000"
+                         :style="{ width: `${Math.min((achievement.progress / achievement.maxProgress) * 100, 100)}%` }"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- Прогресс блока -->
-        <div class="mt-10 pt-6 border-t border-white/20">
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-lg font-medium">Общий прогресс</span>
-            <span class="text-xl font-bold">
-              {{ unlockedCount }}/{{ block.achievements.length }}
-            </span>
-          </div>
-          <div class="w-full h-4 bg-gray-700/50 rounded-full overflow-hidden">
-            <div 
-              class="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-700"
-              :style="{ width: `${progressPercentage}%` }"
-            ></div>
-          </div>
-          <div class="text-center mt-3 text-sm opacity-80">
-            {{ progressPercentage }}% достижений разблокировано
+
+        <!-- Stats Grid -->
+        <div class="mt-6 sm:mt-8 md:mt-10 grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 text-center">
+          <div v-for="(cat, name) in stats.byCategory" :key="name" 
+               class="bg-zinc-800/50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-800/50">
+            <div class="text-xl sm:text-2xl md:text-2xl font-black text-emerald-400">{{ cat.unlocked }}/{{ cat.total }}</div>
+            <div class="text-[9px] sm:text-[10px] font-bold text-zinc-500 uppercase mt-1 truncate">
+              {{ name }}
+            </div>
           </div>
         </div>
-        
-        <!-- Подсказки -->
-        <div class="mt-6 text-center text-sm opacity-70">
-          <p>💡 Нажмите на достижение, чтобы изменить его статус</p>
+
+        <!-- Reset Button -->
+        <div class="mt-6 sm:mt-8">
+          <button @click="handleReset" 
+                  class="w-full py-3 sm:py-4 text-zinc-600 hover:text-rose-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors active:scale-95 touch-manipulation border border-zinc-800/50 hover:border-rose-500/30 rounded-xl sm:rounded-2xl bg-zinc-900/50 backdrop-blur-sm">
+            Сбросить весь прогресс
+          </button>
         </div>
       </div>
     </div>
@@ -188,106 +81,122 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue';
+import { loadAchievements, getStats, resetAchievements, type Achievement } from './utils/achievements';
 
-// ========== ТИПЫ ==========
-interface Achievement {
-  id: number
-  title: string
-  description?: string
-  unlocked: boolean
-  date?: string
-  category?: string
-  progress?: number
+defineOptions({ name: 'AchievementsPage' });
+
+const achievements = ref<Achievement[]>([]);
+const stats = computed(() => getStats());
+const block = { title: 'Достижения', subtitle: 'Ваш путь к мастерству TradeGuess' };
+
+const handleReset = () => {
+  if (confirm('Вы уверены? Это действие необратимо.')) achievements.value = resetAchievements();
+};
+
+onMounted(() => { achievements.value = loadAchievements(); });
+</script>
+
+<style>
+/* Safe area для мобильных устройств */
+.safe-area-padding {
+  padding-left: env(safe-area-inset-left, 12px);
+  padding-right: env(safe-area-inset-right, 12px);
+  padding-top: env(safe-area-inset-top, 12px);
 }
 
-interface AchievementBlock {
-  title: string
-  subtitle: string
-  achievements: Achievement[]
-  backgroundColor?: string
-  backgroundImage?: string
-  textColor?: string
+/* Дополнительный отступ для навигации (70px + safe-area-inset-bottom) */
+.pb-nav {
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 24px));
 }
 
-// ========== ДАННЫЕ ==========
-const block = ref<AchievementBlock>({
-  title: 'Мои достижения',
-  subtitle: 'Путь к успеху начинается здесь',
-  // Можно установить любой цвет фона
-  // backgroundColor: '#1e293b',
-  // Или использовать изображение
-  // backgroundImage: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=1200',
-  textColor: '#ffffff',
-  
-  achievements: [
-    {
-      id: 1,
-      title: 'Первое достижение',
-      description: 'Зайти в игру',
-      unlocked: true,
-      date: '2024-01-15',
-      category: 'Старт',
-      progress: 100
-    },
-  ]
-})
+/* Улучшение для touch устройств */
+.touch-manipulation {
+  touch-action: manipulation;
+}
 
-// ========== ВЫЧИСЛЯЕМЫЕ СВОЙСТВА ==========
-const unlockedCount = computed(() => {
-  return block.value.achievements.filter(a => a.unlocked).length
-})
+/* Кастомный скроллбар */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4ade80 transparent;
+}
 
-const progressPercentage = computed(() => {
-  return Math.round((unlockedCount.value / block.value.achievements.length) * 100)
-})
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
 
-// ========== МЕТОДЫ ==========
-const toggleAchievement = (id: number) => {
-  const achievement = block.value.achievements.find(a => a.id === id)
-  if (achievement) {
-    achievement.unlocked = !achievement.unlocked
-    // Если разблокируем, устанавливаем прогресс 100%
-    if (achievement.unlocked && achievement.progress !== undefined) {
-      achievement.progress = 100
-    }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #4ade80;
+  border-radius: 20px;
+}
+
+/* Улучшение для маленьких экранов */
+@media (max-width: 360px) {
+  .text-2xl {
+    font-size: 1.5rem;
   }
 }
 
-const darkenColor = (color: string, percent: number): string => {
-  // Простая функция для затемнения цвета (для градиента)
-  return color // В реальном проекте добавьте логику изменения цвета
+/* Улучшение для горизонтальной ориентации на мобильных */
+@media (max-height: 500px) and (orientation: landscape) {
+  .min-h-screen {
+    min-height: auto;
+  }
+  .p-3 {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .pb-nav {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 12px));
+  }
+  .max-h-\[calc\(100vh-320px\)\] {
+    max-height: calc(100vh - 280px);
+  }
 }
 
-// ========== ХУКИ ==========
-onMounted(() => {
-  console.log('Блок достижений загружен')
-})
-</script>
-
-<style scoped>
-.achievement-block {
-  background-size: cover;
-  background-position: center;
+/* Оптимизация для очень высоких экранов */
+@media (min-height: 1000px) {
+  .min-h-screen {
+    min-height: 100vh;
+  }
 }
 
-.achievement-item {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Line clamp для длинных текстов */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.achievement-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+@media (min-width: 640px) {
+  .line-clamp-2 {
+    -webkit-line-clamp: unset;
+    display: block;
+  }
 }
 
-/* Анимация разблокировки */
-@keyframes unlockPulse {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+/* Плавная прокрутка для мобильных */
+@media (max-width: 768px) {
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
-.achievement-item:has(.unlocked) {
-  animation: unlockPulse 0.6s ease-out;
+/* Адаптация для разных высот экрана */
+@media (max-height: 700px) {
+  .max-h-\[calc\(100vh-320px\)\] {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+@media (min-height: 900px) {
+  .max-h-\[calc\(100vh-320px\)\] {
+    max-height: calc(100vh - 360px);
+  }
 }
 </style>

@@ -3,6 +3,7 @@ import { MainMenu } from '@/pages/menu'
 import {TradeGame} from '@/pages/chart'
 import {RealTimeChart} from '@/pages/real-time'
 import {Achievements} from '@/pages/achievements'
+import { Account } from '@/pages/account'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/achievements',
       name: 'achievements',
       component: Achievements,
+    },
+    {
+      path: '/account',
+      name: 'account',
+      component: Account,
     }
   ],
 })

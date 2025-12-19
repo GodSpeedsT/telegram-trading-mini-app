@@ -90,7 +90,7 @@ function achievements() {
 }
 
 function account() {
-  router.push({ path: '/' });
+  router.push({ path: '/account' });
 }
 
 // ✅ Данные пользователя из авторизации

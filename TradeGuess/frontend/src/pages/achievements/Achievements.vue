@@ -1,29 +1,49 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4 bg-zinc-950 font-sans pb-28 text-white">
-    <div class="relative w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
+  <div class="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-zinc-950 font-sans text-white safe-area-padding pb-nav">
+    <div class="relative w-full max-w-4xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
       <div class="absolute inset-0 bg-gradient-to-br from-green-900/20 via-zinc-900/80 to-black/50 pointer-events-none"></div>
-      <div class="relative z-10 p-6 sm:p-10">
-        <header class="text-center mb-10">
-          <h1 class="text-3xl sm:text-4xl font-black mb-2 tracking-tight">{{ block.title }}</h1>
-          <p class="text-zinc-500 font-medium">{{ block.subtitle }}</p>
+      
+      <div class="relative z-10 p-4 sm:p-6 md:p-8 lg:p-10">
+        <!-- Header -->
+        <header class="text-center mb-6 sm:mb-8 md:mb-10">
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-black mb-2 tracking-tight leading-tight">{{ block.title }}</h1>
+          <p class="text-zinc-500 font-medium text-sm sm:text-base">{{ block.subtitle }}</p>
         </header>
-        <div class="space-y-4">
+
+        <!-- Achievements List -->
+        <div class="space-y-3 sm:space-y-4 max-h-[calc(100vh-320px)] sm:max-h-[calc(100vh-360px)] overflow-y-auto pr-1 custom-scrollbar">
           <div v-for="achievement in achievements" :key="achievement.id"
-               class="group relative p-5 rounded-2xl border transition-all duration-300 backdrop-blur-md"
+               class="group relative p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl border transition-all duration-300 backdrop-blur-md"
                :class="achievement.unlocked ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-800/20 border-zinc-800'">
-            <div class="flex items-center gap-5">
-              <div class="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg"
+            
+            <div class="flex items-start sm:items-center gap-3 sm:gap-4 md:gap-5">
+              <!-- Icon -->
+              <div class="shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg"
                    :class="achievement.unlocked ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-zinc-800'">
-                <span class="text-2xl">{{ achievement.unlocked ? '🏆' : '🔒' }}</span>
+                <span class="text-xl sm:text-2xl">{{ achievement.unlocked ? '🏆' : '🔒' }}</span>
               </div>
+
+              <!-- Content -->
               <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-start mb-1">
-                  <h3 class="font-bold text-lg" :class="achievement.unlocked ? 'text-white' : 'text-zinc-500'">{{ achievement.title }}</h3>
-                  <span class="text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-500 font-black uppercase tracking-widest">{{ achievement.category }}</span>
+                <!-- Title and Category -->
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2 mb-1">
+                  <h3 class="font-bold text-base sm:text-lg md:text-lg truncate"
+                      :class="achievement.unlocked ? 'text-white' : 'text-zinc-500'">
+                    {{ achievement.title }}
+                  </h3>
+                  <span class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-500 font-black uppercase tracking-widest self-start sm:self-auto">
+                    {{ achievement.category }}
+                  </span>
                 </div>
-                <p class="text-sm text-zinc-500 leading-snug">{{ achievement.description }}</p>
-                <div v-if="achievement.type !== 'boolean'" class="mt-4">
-                  <div class="flex justify-between text-[10px] font-black text-zinc-600 mb-1.5 uppercase">
+
+                <!-- Description -->
+                <p class="text-xs sm:text-sm text-zinc-500 leading-snug line-clamp-2 sm:line-clamp-none">
+                  {{ achievement.description }}
+                </p>
+
+                <!-- Progress Bar (for non-boolean achievements) -->
+                <div v-if="achievement.type !== 'boolean'" class="mt-3 sm:mt-4">
+                  <div class="flex justify-between text-[9px] sm:text-[10px] font-black text-zinc-600 mb-1.5 uppercase">
                     <span>Прогресс</span>
                     <span>{{ achievement.progress }} / {{ achievement.maxProgress }}</span>
                   </div>
@@ -37,15 +57,24 @@
           </div>
         </div>
 
-        <div class="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div v-for="(cat, name) in stats.byCategory" :key="name" class="bg-zinc-800/50 p-4 rounded-2xl border border-zinc-800/50">
-            <div class="text-2xl font-black text-emerald-400">{{ cat.unlocked }}/{{ cat.total }}</div>
-            <div class="text-[10px] font-bold text-zinc-500 uppercase mt-1">{{ name }}</div>
+        <!-- Stats Grid -->
+        <div class="mt-6 sm:mt-8 md:mt-10 grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 text-center">
+          <div v-for="(cat, name) in stats.byCategory" :key="name" 
+               class="bg-zinc-800/50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-800/50">
+            <div class="text-xl sm:text-2xl md:text-2xl font-black text-emerald-400">{{ cat.unlocked }}/{{ cat.total }}</div>
+            <div class="text-[9px] sm:text-[10px] font-bold text-zinc-500 uppercase mt-1 truncate">
+              {{ name }}
+            </div>
           </div>
         </div>
-        <button @click="handleReset" class="w-full mt-10 py-4 text-zinc-600 hover:text-rose-500 text-[10px] font-bold uppercase tracking-widest transition-colors">
-          Сбросить весь прогресс
-        </button>
+
+        <!-- Reset Button -->
+        <div class="mt-6 sm:mt-8">
+          <button @click="handleReset" 
+                  class="w-full py-3 sm:py-4 text-zinc-600 hover:text-rose-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors active:scale-95 touch-manipulation border border-zinc-800/50 hover:border-rose-500/30 rounded-xl sm:rounded-2xl bg-zinc-900/50 backdrop-blur-sm">
+            Сбросить весь прогресс
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -67,3 +96,107 @@ const handleReset = () => {
 
 onMounted(() => { achievements.value = loadAchievements(); });
 </script>
+
+<style>
+/* Safe area для мобильных устройств */
+.safe-area-padding {
+  padding-left: env(safe-area-inset-left, 12px);
+  padding-right: env(safe-area-inset-right, 12px);
+  padding-top: env(safe-area-inset-top, 12px);
+}
+
+/* Дополнительный отступ для навигации (70px + safe-area-inset-bottom) */
+.pb-nav {
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 24px));
+}
+
+/* Улучшение для touch устройств */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Кастомный скроллбар */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4ade80 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #4ade80;
+  border-radius: 20px;
+}
+
+/* Улучшение для маленьких экранов */
+@media (max-width: 360px) {
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+}
+
+/* Улучшение для горизонтальной ориентации на мобильных */
+@media (max-height: 500px) and (orientation: landscape) {
+  .min-h-screen {
+    min-height: auto;
+  }
+  .p-3 {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .pb-nav {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 12px));
+  }
+  .max-h-\[calc\(100vh-320px\)\] {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+/* Оптимизация для очень высоких экранов */
+@media (min-height: 1000px) {
+  .min-h-screen {
+    min-height: 100vh;
+  }
+}
+
+/* Line clamp для длинных текстов */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .line-clamp-2 {
+    -webkit-line-clamp: unset;
+    display: block;
+  }
+}
+
+/* Плавная прокрутка для мобильных */
+@media (max-width: 768px) {
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Адаптация для разных высот экрана */
+@media (max-height: 700px) {
+  .max-h-\[calc\(100vh-320px\)\] {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+@media (min-height: 900px) {
+  .max-h-\[calc\(100vh-320px\)\] {
+    max-height: calc(100vh - 360px);
+  }
+}
+</style>

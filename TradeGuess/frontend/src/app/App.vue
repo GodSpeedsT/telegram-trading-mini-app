@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-//import { telegramWebApp } from '@/app/main.ts'
+import { telegramWebApp } from '@/app/main.ts'
 import { useRoute } from 'vue-router'
 import { NavigationMenu } from '@/widgets/NavigationMenu'
 
@@ -8,9 +8,6 @@ const route = useRoute()
 const showNavigation = ref(false)
 const isAuthenticated = ref(false)
 const authError = ref('')
-
-const telegramWebApp = ref<any>(null)
-console.log('🔴 Первый лог в setup')
 
 watch(
   () => route.path,
@@ -20,21 +17,10 @@ watch(
   { immediate: true }
 )
 
-
-
-const getTelegramWebApp = () => {
-  if (typeof window !== 'undefined') {
-    return window.Telegram?.WebApp || null
-  }
-  return null
-}
-
-
-
 const authenticateUser = async () => {
   console.log('telegramWebApp:', telegramWebApp)
 
-  const tg = telegramWebApp.value
+  const tg = telegramWebApp
 
   if (!tg || !tg.initDataUnsafe?.user) {
     console.warn('Telegram WebApp недоступен')
@@ -56,6 +42,7 @@ const authenticateUser = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        initData: tg.initData,
         telegramId: user.id,
         username: user.username || '',
         firstName: user.first_name || ''
@@ -86,14 +73,9 @@ const authenticateUser = async () => {
 }
 
 onMounted(async () => {
-
-  telegramWebApp.value = getTelegramWebApp()
-  console.log('🔍 telegramWebApp.value:', telegramWebApp.value)
-
   if (localStorage.getItem('token')) {
     return
   }
-
   await authenticateUser()
   console.log('⚡ authenticateUser вызван')
 })

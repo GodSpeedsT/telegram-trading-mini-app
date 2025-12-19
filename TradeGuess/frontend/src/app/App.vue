@@ -6,67 +6,78 @@ import { NavigationMenu } from '@/widgets/NavigationMenu'
 
 const route = useRoute()
 const showNavigation = ref(false)
-const isAuthenticated = ref(false)
-const authError = ref('')
+const isTesting = ref(false)
+const testResult = ref('')
+const currentUser = ref<any>(null)
 
-watch(
-  () => route.path,
-  newPath => {
-    showNavigation.value = newPath !== '/'
-  },
-  { immediate: true }
-)
+watch(() => route.path, (newPath) => {
+  showNavigation.value = newPath !== '/'
+}, { immediate: true })
 
-const authenticateUser = async () => {
-  const tg = telegramWebApp
+const collectRealUserData = () => {
+  const tg = telegramWebApp;
 
   if (!tg || !tg.initDataUnsafe?.user) {
-    console.warn('Telegram WebApp недоступен')
-    return false
+    return {
+      telegramId: 999999,
+      username: 'testuser',
+      firstName: 'Test User',
+      isReal: false
+    };
   }
 
-  const user = tg.initDataUnsafe.user
+  // ✅ РЕАЛЬНЫЕ данные из Telegram
+  const user = tg.initDataUnsafe.user;
+  currentUser.value = user;
+
+  return {
+    telegramId: user.id,
+    username: user.username || '',
+    firstName: user.first_name || '',
+    isReal: true,
+    fullData: user // Полные данные для показа
+  };
+}
+
+const testAuth = async () => {
+  isTesting.value = true
+  testResult.value = ''
 
   try {
+    // ✅ Собираем РЕАЛЬНЫЕ данные пользователя
+    const realUserData = collectRealUserData();
+
+    testResult.value = `👤 Пользователь найден:\n${JSON.stringify(realUserData.fullData, null, 2)}`
+
+    // ✅ Отправляем ТОЛЬКО нужные данные на сервер
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        telegramId: user.id,
-        username: user.username || '',
-        firstName: user.first_name || ''
+        telegramId: realUserData.telegramId,
+        username: realUserData.username,
+        firstName: realUserData.firstName
       })
-    })
+    });
 
-    const data = await response.json()
+    const data = await response.json();
 
-    if (response.ok && data.success && data.data?.token) {
+    testResult.value += `\n\n📡 Ответ сервера (${response.status}):\n${JSON.stringify(data, null, 2)}`
+
+    if (data.success && data.data?.token) {
       localStorage.setItem('token', data.data.token)
-      isAuthenticated.value = true
-      tg.showAlert('✅ Авторизация успешна!')
-
-      setTimeout(() => {
-        isAuthenticated.value = false
-      }, 1500)
-
-      return true
-    } else {
-      throw new Error(data.message || 'Ошибка сервера')
+      testResult.value += '\n\n✅ Токен сохранён в localStorage!'
     }
+
   } catch (error: any) {
-    console.error('Авторизация:', error)
-    authError.value = error.message
-    telegramWebApp?.showAlert(`❌ ${error.message}`)
-    return false
+    testResult.value = `❌ Ошибка: ${error.message}`
+    console.error(error)
+  } finally {
+    isTesting.value = false
   }
 }
 
-onMounted(async () => {
-  if (localStorage.getItem('token')) {
-    return
-  }
-  await authenticateUser()
-})
+
 </script>
 
 <template>

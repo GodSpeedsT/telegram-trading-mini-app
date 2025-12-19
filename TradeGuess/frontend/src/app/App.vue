@@ -35,6 +35,7 @@ const authenticateUser = async () => {
   })
 
   try {
+    console.log('🚀 Отправляем запрос на бэкенд...')
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,6 +75,7 @@ onMounted(async () => {
     return
   }
   await authenticateUser()
+  console.log('⚡ authenticateUser вызван')
 })
 </script>
 

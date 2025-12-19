@@ -18,6 +18,8 @@ watch(
 )
 
 const authenticateUser = async () => {
+  console.log('telegramWebApp:', telegramWebApp)
+
   const tg = telegramWebApp
 
   if (!tg || !tg.initDataUnsafe?.user) {

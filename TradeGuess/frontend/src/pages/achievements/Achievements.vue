@@ -28,16 +28,15 @@
         <!-- Список достижений -->
         <div class="space-y-5">
           <div 
-            v-for="achievement in block.achievements" 
+            v-for="achievement in achievements" 
             :key="achievement.id"
-            class="achievement-item group relative p-5 rounded-2xl transition-all duration-400 cursor-pointer"
+            class="achievement-item group relative p-5 rounded-2xl transition-all duration-400"
             :class="[
               achievement.unlocked 
                 ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/50' 
                 : 'bg-gradient-to-r from-gray-800/30 to-gray-900/30 border-gray-600/30',
-              'border backdrop-blur-sm hover:scale-[1.02] hover:shadow-xl'
+              'border backdrop-blur-sm'
             ]"
-            @click="toggleAchievement(achievement.id)"
           >
             <!-- Эффект свечения для разблокированных -->
             <div 
@@ -80,7 +79,6 @@
                 <!-- Название достижения -->
                 <div class="mb-2">
                   <div 
-                    v-if="achievement.title.trim()"
                     class="text-xl font-semibold"
                     :class="achievement.unlocked ? 'text-white' : 'text-gray-300'"
                   >
@@ -90,37 +88,45 @@
                 
                 <!-- Описание -->
                 <div 
-                  v-if="achievement.description"
                   class="text-sm opacity-90 mb-3"
                 >
                   {{ achievement.description }}
+                </div>
+                
+                <!-- Прогресс бар (если нужно) -->
+                <div v-if="achievement.type !== 'boolean'" class="mt-2">
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-400">
+                      Прогресс: {{ achievement.progress }}/{{ achievement.maxProgress }}
+                    </span>
+                    <span class="text-gray-400">
+                      {{ Math.round((achievement.progress / achievement.maxProgress) * 100) }}%
+                    </span>
+                  </div>
+                  <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      class="h-full bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full transition-all duration-500"
+                      :style="{ width: `${(achievement.progress / achievement.maxProgress) * 100}%` }"
+                    ></div>
+                  </div>
                 </div>
                 
                 <!-- Мета информация -->
                 <div class="flex flex-wrap gap-3 mt-3">
                   <!-- Категория -->
                   <div 
-                    v-if="achievement.category"
                     class="text-xs px-3 py-1 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20"
                   >
                     {{ achievement.category }}
                   </div>
-                </div>
-              </div>
-              
-              <!-- Бейдж прогресса -->
-              <div 
-                v-if="achievement.progress !== undefined"
-                class="flex-shrink-0 w-24"
-              >
-                <div class="text-right text-sm mb-1">
-                  {{ achievement.progress }}%
-                </div>
-                <div class="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                  
+                  <!-- Статус -->
                   <div 
-                    class="h-full bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full transition-all duration-500"
-                    :style="{ width: `${achievement.progress}%` }"
-                  ></div>
+                    class="text-xs px-3 py-1 rounded-full"
+                    :class="achievement.unlocked ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-400'"
+                  >
+                    {{ achievement.unlocked ? 'Разблокировано' : 'Заблокировано' }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -132,172 +138,86 @@
           <div class="flex justify-between items-center mb-2">
             <span class="text-lg font-medium">Общий прогресс</span>
             <span class="text-xl font-bold">
-              {{ unlockedCount }}/{{ block.achievements.length }}
+              {{ stats.unlockedCount }}/{{ stats.totalCount }}
             </span>
           </div>
           <div class="w-full h-4 bg-gray-700/50 rounded-full overflow-hidden">
             <div 
               class="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-700"
-              :style="{ width: `${progressPercentage}%` }"
+              :style="{ width: `${stats.progressPercentage}%` }"
             ></div>
           </div>
           <div class="text-center mt-3 text-sm opacity-80">
-            {{ progressPercentage }}% достижений разблокировано
+            {{ stats.progressPercentage }}% достижений разблокировано
           </div>
         </div>
         
         <!-- Статистика -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div class="bg-gray-800/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-emerald-400">{{ unlockedCount }}</div>
+            <div class="text-2xl font-bold text-emerald-400">{{ stats.unlockedCount }}</div>
             <div class="text-sm text-gray-400">Разблокировано</div>
           </div>
           <div class="bg-gray-800/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-cyan-400">{{ block.achievements.length }}</div>
+            <div class="text-2xl font-bold text-cyan-400">{{ stats.totalCount }}</div>
             <div class="text-sm text-gray-400">Всего достижений</div>
           </div>
           <div class="bg-gray-800/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-yellow-400">{{ remainingCount }}</div>
+            <div class="text-2xl font-bold text-yellow-400">{{ stats.remainingCount }}</div>
             <div class="text-sm text-gray-400">Осталось разблокировать</div>
           </div>
           <div class="bg-gray-800/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-purple-400">{{ progressPercentage }}%</div>
+            <div class="text-2xl font-bold text-purple-400">{{ stats.progressPercentage }}%</div>
             <div class="text-sm text-gray-400">Прогресс</div>
+          </div>
+        </div>
+        
+        <!-- Кнопки управления -->
+        <div class="mt-6 pt-6 border-t border-white/20">
+          <div class="flex gap-3 justify-center">
+            <button 
+              @click="resetAchievements"
+              class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30"
+            >
+              Сбросить все достижения
+            </button>
           </div>
         </div>
       </div>
     </div>
-    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { 
+  loadAchievements, 
+  resetAchievements as resetAchievementsFromStorage,
+  getStats,
+  type Achievement 
+} from './utils/achievements'
 
+// Загружаем достижения из localStorage
+const achievements = ref<Achievement[]>(loadAchievements())
 
-// ========== ТИПЫ ==========
-interface Achievement {
-  id: number
-  title: string
-  description?: string
-  unlocked: boolean
-  category?: string
-  progress?: number
+// Получаем статистику
+const stats = computed(() => getStats())
+
+// Сбрасываем достижения
+const resetAchievements = () => {
+  achievements.value = resetAchievementsFromStorage()
 }
 
-interface AchievementBlock {
-  title: string
-  subtitle: string
-  achievements: Achievement[]
-  backgroundColor?: string
-  backgroundImage?: string
-  textColor?: string
-}
-
-// ========== ДАННЫЕ ==========
-const block = ref<AchievementBlock>({
+// Для совместимости с существующим кодом
+const block = {
   title: 'Мои достижения',
   subtitle: 'Путь к успеху начинается здесь',
   backgroundColor: '#1e293b',
-  textColor: '#ffffff',
-  
-  achievements: [
-    {
-      id: 1,
-      title: 'Первое достижение',
-      description: 'Зайти в игру',
-      unlocked: true,
-      category: 'Старт',
-      progress: 100
-    },
-    {
-      id: 2,
-      title: 'Первая прибыль',
-      description: 'Закрыть сделку с положительным результатом',
-      unlocked: true,
-      category: 'Старт',
-      progress: 100
-    },
-    {
-      id: 3,
-      title: 'Самодостаточный',
-      description: 'Закрыть 5 сделок подряд с положительным результатом',
-      unlocked: true,
-      category: 'Старт',
-      progress: 100
-    },
-    {
-      id: 4,
-      title: 'Миллионер',
-      description: 'Закрыть 15 сделок подряд с положительным результатом',
-      unlocked: true,
-      category: 'Старт',
-      progress: 100
-    },
-    {
-      id: 99,
-      title: 'Умнейший',
-      description: 'Выполните все достижения',
-      unlocked: true,
-      category: 'Старт',
-      progress: 100
-    }
-  ]
-})
-
-// ========== ВЫЧИСЛЯЕМЫЕ СВОЙСТВА ==========
-const unlockedCount = computed(() => {
-  return block.value.achievements.filter(a => a.unlocked).length
-})
-
-const remainingCount = computed(() => {
-  return block.value.achievements.length - unlockedCount.value
-})
-
-const progressPercentage = computed(() => {
-  return Math.round((unlockedCount.value / block.value.achievements.length) * 100)
-})
-
-// ========== МЕТОДЫ ==========
-const toggleAchievement = (id: number) => {
-  const achievement = block.value.achievements.find(a => a.id === id)
-  if (achievement) {
-    achievement.unlocked = !achievement.unlocked
-    // Если разблокируем, устанавливаем прогресс 100%
-    if (achievement.unlocked && achievement.progress !== undefined) {
-      achievement.progress = 100
-    }
-  }
+  textColor: '#ffffff'
 }
 
-// ========== ХУКИ ==========
+// Обновляем достижения при загрузке страницы
 onMounted(() => {
   console.log('Блок достижений загружен')
 })
 </script>
-
-<style scoped>
-.achievement-block {
-  background-size: cover;
-  background-position: center;
-}
-
-.achievement-item {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.achievement-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-}
-
-/* Анимация разблокировки */
-@keyframes unlockPulse {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-}
-
-.achievement-item:has(.unlocked) {
-  animation: unlockPulse 0.6s ease-out;
-}
-</style>

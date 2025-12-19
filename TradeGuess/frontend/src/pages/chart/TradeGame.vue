@@ -1,5 +1,28 @@
 <template>
   <div class="w-full h-full min-h-screen bg-zinc-950 text-white flex flex-col font-sans select-none overflow-hidden relative pb-[90px]">
+    <!-- Уведомления о достижениях -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+      <transition-group name="notification">
+        <div 
+          v-for="notification in notifications" 
+          :key="notification.id"
+          class="notification bg-gradient-to-r from-emerald-600 to-green-500 text-white p-4 rounded-2xl shadow-2xl max-w-sm border-2 border-emerald-400/50 backdrop-blur-sm"
+        >
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-lg mb-1">{{ notification.title }}</h3>
+              <p class="text-sm opacity-90">{{ notification.description }}</p>
+            </div>
+          </div>
+        </div>
+      </transition-group>
+    </div>
+    
     <div class="absolute inset-0 w-full h-full bg-puzzle-pattern opacity-10 pointer-events-none"></div>
     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/60 to-zinc-950 pointer-events-none"></div>
     <div class="pt-5 pb-2 px-4 z-20 shrink-0 flex flex-col gap-3">
@@ -91,7 +114,6 @@
         </div>
       </div>
     </transition>
-    
   </div>
 </template>
 
@@ -121,6 +143,12 @@ interface AssetData {
   data: Candle[];
 }
 
+interface AchievementNotification {
+  id: number;
+  title: string;
+  description: string;
+}
+
 const datasets = historicalDatasets as Record<string, Record<string, AssetData>>;
 
 const VISIBLE_COUNT = 30;
@@ -146,9 +174,274 @@ const progress = ref(100);
 const score = ref(0);
 const streak = ref(0);
 
+// Статистика для достижений
+const totalWins = ref(0);
+const trendWins = ref(0);
+const candleWins = ref(0);
+const currentTrendStreak = ref(0);
+const currentCandleStreak = ref(0);
+
+// Уведомления о достижениях
+const notifications = ref<AchievementNotification[]>([]);
+
+// Ключи для localStorage
+const STORAGE_KEY = 'trade_game_achievements';
+const SCORE_KEY = 'trade_game_score';
+const STATS_KEY = 'trade_game_stats';
+
+// Начальные данные достижений
+const initialAchievements = [
+  {
+    id: 1,
+    title: 'Первое достижение',
+    description: 'Зайти в игру',
+    unlocked: true,
+    category: 'Старт',
+    progress: 1,
+    maxProgress: 1,
+    type: 'boolean'
+  },
+  {
+    id: 2,
+    title: 'Первая прибыль',
+    description: 'Закрыть сделку с положительным результатом',
+    unlocked: false,
+    category: 'Старт',
+    progress: 0,
+    maxProgress: 1,
+    type: 'counter'
+  },
+  {
+    id: 3,
+    title: 'Самодостаточный',
+    description: 'Закрыть 5 сделок подряд с положительным результатом',
+    unlocked: false,
+    category: 'Старт',
+    progress: 0,
+    maxProgress: 5,
+    type: 'counter'
+  },
+  {
+    id: 4,
+    title: 'Миллионер',
+    description: 'Закрыть 15 сделок подряд с положительным результатом',
+    unlocked: false,
+    category: 'Старт',
+    progress: 0,
+    maxProgress: 15,
+    type: 'counter'
+  },
+  {
+    id: 5,
+    title: 'Трендовый гений',
+    description: 'Правильно определить 10 трендов подряд',
+    unlocked: false,
+    category: 'Навыки',
+    progress: 0,
+    maxProgress: 10,
+    type: 'streak'
+  },
+  {
+    id: 6,
+    title: 'Свечной эксперт',
+    description: 'Правильно предсказать 5 свечей подряд',
+    unlocked: false,
+    category: 'Навыки',
+    progress: 0,
+    maxProgress: 5,
+    type: 'streak'
+  },
+  {
+    id: 7,
+    title: 'Стратег',
+    description: 'Выиграть 50 сделок в режиме "Тренд"',
+    unlocked: false,
+    category: 'Мастерство',
+    progress: 0,
+    maxProgress: 50,
+    type: 'counter'
+  },
+  {
+    id: 8,
+    title: 'Технический аналитик',
+    description: 'Выиграть 50 сделок в режиме "1 Свеча"',
+    unlocked: false,
+    category: 'Мастерство',
+    progress: 0,
+    maxProgress: 50,
+    type: 'counter'
+  },
+  {
+    id: 9,
+    title: 'Ученик',
+    description: 'Набрать 100 очков',
+    unlocked: false,
+    category: 'Прогресс',
+    progress: 0,
+    maxProgress: 100,
+    type: 'counter'
+  },
+  {
+    id: 10,
+    title: 'Мастер',
+    description: 'Набрать 1000 очков',
+    unlocked: false,
+    category: 'Прогресс',
+    progress: 0,
+    maxProgress: 1000,
+    type: 'counter'
+  },
+  {
+    id: 99,
+    title: 'Умнейший',
+    description: 'Выполнить все достижения',
+    unlocked: false,
+    category: 'Старт',
+    progress: 0,
+    maxProgress: 1,
+    type: 'boolean'
+  }
+];
+
+// Загрузка достижений из localStorage
+const loadAchievements = () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    return JSON.parse(saved);
+  }
+  // Сохраняем начальные данные
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(initialAchievements));
+  return initialAchievements;
+};
+
+// Сохранение достижений в localStorage
+const saveAchievements = (achievements: any[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(achievements));
+};
+
+// Обновление прогресса достижения
+const updateAchievementProgress = (achievementId: number, increment = 1): { updated: boolean; achievement?: any } => {
+  const achievements = loadAchievements();
+  const achievement = achievements.find((a: any) => a.id === achievementId);
+  
+  if (!achievement || achievement.unlocked) {
+    return { updated: false };
+  }
+
+  if (achievement.type === 'streak') {
+    achievement.progress = increment > 0 ? achievement.progress + 1 : 0;
+  } else {
+    achievement.progress = Math.min(achievement.progress + increment, achievement.maxProgress);
+  }
+
+  let unlocked = false;
+  if (achievement.progress >= achievement.maxProgress && !achievement.unlocked) {
+    achievement.unlocked = true;
+    unlocked = true;
+    
+    // Показываем уведомление
+    notifications.value.push({
+      id: Date.now(),
+      title: achievement.title,
+      description: achievement.description
+    });
+    
+    // Автоматически скрываем уведомление через 5 секунд
+    setTimeout(() => {
+      if (notifications.value.length > 0) {
+        notifications.value.shift();
+      }
+    }, 5000);
+    
+    // Проверяем достижение "Умнейший"
+    checkAllAchievements(achievements);
+  }
+
+  saveAchievements(achievements);
+  return { updated: true, achievement: unlocked ? achievement : undefined };
+};
+
+// Проверка всех достижений для "Умнейший"
+const checkAllAchievements = (achievements: any[]) => {
+  const allAchievementsUnlocked = achievements
+    .filter((a: any) => a.id !== 99)
+    .every((a: any) => a.unlocked);
+  
+  if (allAchievementsUnlocked) {
+    const smartest = achievements.find((a: any) => a.id === 99);
+    if (smartest && !smartest.unlocked) {
+      smartest.unlocked = true;
+      smartest.progress = 1;
+      
+      // Показываем уведомление
+      notifications.value.push({
+        id: Date.now(),
+        title: smartest.title,
+        description: smartest.description
+      });
+      
+      // Автоматически скрываем уведомление через 5 секунд
+      setTimeout(() => {
+        if (notifications.value.length > 0) {
+          notifications.value.shift();
+        }
+      }, 5000);
+      
+      saveAchievements(achievements);
+    }
+  }
+};
+
+// Загрузка счета из localStorage
+const loadScore = () => {
+  const saved = localStorage.getItem(SCORE_KEY);
+  return saved ? parseInt(saved) : 0;
+};
+
+// Сохранение счета в localStorage
+const saveScore = (newScore: number) => {
+  localStorage.setItem(SCORE_KEY, newScore.toString());
+};
+
+// Загрузка статистики из localStorage
+const loadStats = () => {
+  const saved = localStorage.getItem(STATS_KEY);
+  if (saved) {
+    return JSON.parse(saved);
+  }
+  return {
+    totalWins: 0,
+    trendWins: 0,
+    candleWins: 0,
+    currentTrendStreak: 0,
+    currentCandleStreak: 0
+  };
+};
+
+// Сохранение статистики в localStorage
+const saveStats = () => {
+  const stats = {
+    totalWins: totalWins.value,
+    trendWins: trendWins.value,
+    candleWins: candleWins.value,
+    currentTrendStreak: currentTrendStreak.value,
+    currentCandleStreak: currentCandleStreak.value
+  };
+  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+};
+
 const setGameMode = (mode: 'candle' | 'trend') => {
   if (gameState.value !== 'playing') return;
   gameMode.value = mode;
+  
+  // Сбрасываем стрики при смене режима
+  if (mode === 'candle') {
+    currentTrendStreak.value = 0;
+  } else {
+    currentCandleStreak.value = 0;
+  }
+  
+  saveStats();
   loadNewRound();
 };
 
@@ -313,9 +606,72 @@ const makeGuess = (direction: 'long' | 'short') => {
     gameResult.value = 'win';
     score.value += 10;
     streak.value++;
+    totalWins.value++;
+    
+    // Сохраняем счет
+    saveScore(score.value);
+    
+    // Обновляем достижения
+    const result1 = updateAchievementProgress(2); // Первая прибыль
+    
+    // Самодостаточный (5 побед подряд)
+    if (streak.value >= 5) {
+      updateAchievementProgress(3);
+    }
+    
+    // Миллионер (15 побед подряд)
+    if (streak.value >= 15) {
+      updateAchievementProgress(4);
+    }
+    
+    // Ученик (100 очков)
+    if (score.value >= 100) {
+      updateAchievementProgress(9, 1);
+    }
+    
+    // Мастер (1000 очков)
+    if (score.value >= 1000) {
+      updateAchievementProgress(10, 1);
+    }
+    
+    // Обновляем статистику по режимам
+    if (gameMode.value === 'trend') {
+      trendWins.value++;
+      currentTrendStreak.value++;
+      currentCandleStreak.value = 0;
+      
+      // Стратег (50 побед в тренде)
+      updateAchievementProgress(7);
+      
+      // Трендовый гений (10 трендов подряд)
+      if (currentTrendStreak.value >= 10) {
+        updateAchievementProgress(5);
+      }
+    } else {
+      candleWins.value++;
+      currentCandleStreak.value++;
+      currentTrendStreak.value = 0;
+      
+      // Технический аналитик (50 побед в свечах)
+      updateAchievementProgress(8);
+      
+      // Свечной эксперт (5 свечей подряд)
+      if (currentCandleStreak.value >= 5) {
+        updateAchievementProgress(6);
+      }
+    }
+    
+    // Сохраняем статистику
+    saveStats();
+    
   } else {
     gameResult.value = 'lose';
     streak.value = 0;
+    currentTrendStreak.value = 0;
+    currentCandleStreak.value = 0;
+    
+    // Сохраняем статистику при проигрыше тоже
+    saveStats();
   }
 
   const fullData = [...visibleData.value, ...hiddenData.value];
@@ -330,7 +686,17 @@ const makeGuess = (direction: 'long' | 'short') => {
 };
 
 onMounted(() => {
+  // Загружаем сохраненные данные
+  score.value = loadScore();
+  const stats = loadStats();
+  totalWins.value = stats.totalWins || 0;
+  trendWins.value = stats.trendWins || 0;
+  candleWins.value = stats.candleWins || 0;
+  currentTrendStreak.value = stats.currentTrendStreak || 0;
+  currentCandleStreak.value = stats.currentCandleStreak || 0;
+  
   loadNewRound();
+  
   if (chartRef.value) {
     resizeObserver = new ResizeObserver(() => {
       chartInstance?.resize();
@@ -371,5 +737,41 @@ onUnmounted(() => {
 .result-modal-leave-to .result-modal-content {
   opacity: 0;
   transform: scale(1.1);
+}
+
+/* Анимация для уведомлений */
+.notification-enter-active,
+.notification-leave-active {
+  transition: all 0.3s ease;
+}
+
+.notification-enter-from {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.notification-leave-to {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.notification-move {
+  transition: transform 0.3s ease;
+}
+
+/* Стили для уведомлений */
+.notification {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>

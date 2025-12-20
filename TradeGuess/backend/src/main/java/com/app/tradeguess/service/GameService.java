@@ -78,6 +78,13 @@ public class GameService {
         Long userId = user.getId();
         boolean isAdmin = user.getRole().isAdmin();
 
+        if (!isAdmin) {
+            Integer attemptsToday = getDailyAttempts(userId);
+            if (attemptsToday >= 10) {
+                throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
+            }
+        }
+
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
                 .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
 

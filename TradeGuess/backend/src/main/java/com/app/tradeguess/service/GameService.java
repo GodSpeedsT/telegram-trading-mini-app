@@ -44,10 +44,14 @@ public class GameService {
                 .orElseThrow(()-> new RuntimeException("Пользователь не найден"));
 
         Long userId = user.getId();
-        Integer attemptsToday = getDailyAttempts(userId);
 
-        if (attemptsToday >= 10) {
-            throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
+        boolean isAdmin = user.getRole().equals("SUPER_ADMIN") || user.getRole().equals("ADMIN");
+        if (!isAdmin) {
+            Integer attemptsToday = getDailyAttempts(userId);
+
+            if (attemptsToday >= 10) {
+                throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
+            }
         }
 
         ChartSegment segment = getRandomSegment();
@@ -56,10 +60,12 @@ public class GameService {
             throw new RuntimeException("Нет доступных графиков. Добавьте данные в chart_segments.");
         }
 
+        Integer attemptsLeft = isAdmin ? 999 : (10 - getDailyAttempts(userId));
+
         return ChartResponse.builder()
                 .segmentId(segment.getId())
                 .candles(parseCandles(segment.getDisplayCandles(), ChartResponse.Candle.class))
-                .attemptsLeft(10 - attemptsToday)
+                .attemptsLeft(Math.max(0, attemptsLeft))
                 .build();
     }
 
@@ -69,6 +75,7 @@ public class GameService {
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + telegramId));
 
         Long userId = user.getId();
+        boolean isAdmin = user.getRole().equals("SUPER_ADMIN") || user.getRole().equals("ADMIN");
 
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
                 .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
@@ -76,8 +83,10 @@ public class GameService {
         boolean isCorrect = checkIfCorrect(segment, request.getDirection());
 
         saveAttempt(user, segment, request.getDirection(), isCorrect);
-        incrementDailyAttempts(userId);
 
+        if (!isAdmin) {
+            incrementDailyAttempts(userId);
+        }
         statsService.evictUserStatsCacheByTelegramId(telegramId);
 
         return GuessResponse.builder()

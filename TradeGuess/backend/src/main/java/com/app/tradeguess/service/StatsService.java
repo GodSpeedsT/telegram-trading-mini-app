@@ -41,12 +41,15 @@ public class StatsService {
         Integer currentStreak = calculateCurrentStreak(userId);
         Integer bestStreak = calculateBestStreak(userId);
 
+        Integer attemptsLeft = user.getRole().isAdmin() ?
+                999 : Math.max(0, 10 - dailyAttempts);
+
         return StatsResponse.builder()
                 .totalAttempts(totalAttempts)
                 .correctAttempts(correctAttempts)
                 .accuracy(Math.round(accuracy * 100.0) / 100.0)
                 .dailyAttempts(dailyAttempts)
-                .attemptsLeft(Math.max(0, 10 - dailyAttempts))
+                .attemptsLeft(attemptsLeft)
                 .currentStreak(currentStreak)
                 .bestStreak(bestStreak)
                 .build();

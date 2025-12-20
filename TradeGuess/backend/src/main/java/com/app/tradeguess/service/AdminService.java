@@ -9,6 +9,7 @@ import com.app.tradeguess.repository.GuessAttemptRepository;
 import com.app.tradeguess.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,8 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final GuessAttemptRepository guessAttemptRepository;
+    private final RedisTemplate<String,String> redisTemplate;
+    private final StatsService statsService;
 
     public List<AdminUserResponse> getAllUsers() {
         return userRepository.findAll().stream()
@@ -169,8 +172,7 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Логика сброса попыток в Redis
-        // Это нужно реализовать в RedisService
+
 
         log.info("Дневные попытки пользователя {} (@{}) сброшены администратором {}",
                 user.getFirstName(), user.getUsername(), admin.getUsername());

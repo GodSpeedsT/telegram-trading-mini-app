@@ -55,28 +55,55 @@
              :style="{ width: `${progress}%` }"></div>
       </div>
     </div>
+
+
     <div class="px-4 pt-4 z-20 shrink-0 h-24 sm:h-28 md:h-32 bg-zinc-950 flex items-start">
       <div v-if="gameState === 'playing'" class="grid grid-cols-2 gap-4 h-16 sm:h-20 md:h-24 w-full">
-        <!-- кнопки ВВЕРХ/ВНИЗ -->
+        <!-- Кнопка SHORT -->
+        <button @click="makeGuess('short')"
+                :disabled="gameState !== 'playing'"
+                class="bg-gradient-to-br from-rose-600 to-rose-800 hover:from-rose-700 hover:to-rose-900 active:scale-[0.98] rounded-2xl shadow-[0_8px_0_#be123c] hover:shadow-[0_10px_0_#be123c] transition-all duration-200 flex flex-col items-center justify-center group disabled:opacity-50 disabled:cursor-not-allowed">
+          <div class="flex flex-col items-center justify-center h-full">
+            <span class="text-2xl sm:text-3xl md:text-4xl font-black drop-shadow-lg">📉</span>
+            <span class="text-xs sm:text-sm font-black uppercase mt-1 drop-shadow-lg">SHORT</span>
+          </div>
+          <div class="text-[8px] sm:text-[10px] font-bold text-rose-200 opacity-0 group-hover:opacity-100 transition-opacity">Цена упадет</div>
+        </button>
+
+        <!-- Кнопка LONG -->
+        <button @click="makeGuess('long')"
+                :disabled="gameState !== 'playing'"
+                class="bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 active:scale-[0.98] rounded-2xl shadow-[0_8px_0_#059669] hover:shadow-[0_10px_0_#059669] transition-all duration-200 flex flex-col items-center justify-center group disabled:opacity-50 disabled:cursor-not-allowed">
+          <div class="flex flex-col items-center justify-center h-full">
+            <span class="text-2xl sm:text-3xl md:text-4xl font-black drop-shadow-lg">📈</span>
+            <span class="text-xs sm:text-sm font-black uppercase mt-1 drop-shadow-lg">LONG</span>
+          </div>
+          <div class="text-[8px] sm:text-[10px] font-bold text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">Цена вырастет</div>
+        </button>
       </div>
+
       <div v-else-if="gameState === 'limitReached'" class="h-16 sm:h-20 md:h-24 w-full flex flex-col items-center justify-center text-center p-4">
         <div class="text-xl font-black text-yellow-400 mb-2">⏰</div>
         <div class="text-sm font-bold text-zinc-300 mb-1">{{ serverMessage }}</div>
         <div class="text-xs text-zinc-500">Попробуйте завтра!</div>
       </div>
-      <div v-else-if="gameState === 'result' && !showResultModal" class="h-16 sm:h-20 md:h-24 w-full">
-        <!-- кнопка Дальше -->
-      </div>
+
       <div v-else-if="gameState === 'result' && !showResultModal" class="h-16 sm:h-20 md:h-24 w-full">
         <button @click="loadNewRound"
-                class="w-full h-full bg-white hover:bg-zinc-200 text-black rounded-2xl font-black text-xl sm:text-2xl md:text-3xl shadow-[0_4px_0_#a1a1aa] active:scale-[0.97] transition-all flex items-center justify-center gap-3">
+                class="w-full h-full bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white rounded-2xl font-black text-xl sm:text-2xl md:text-3xl shadow-[0_8px_0_#1d4ed8] hover:shadow-[0_10px_0_#1d4ed8] active:scale-[0.97] transition-all flex items-center justify-center gap-3">
           <span>Дальше</span>
           <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
           </svg>
         </button>
       </div>
+
+      <div v-else-if="gameState === 'loading'" class="h-16 sm:h-20 md:h-24 w-full flex items-center justify-center">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
     </div>
+
+
     <div class="fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-xl border-t border-white/5 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       <div class="flex justify-around items-center h-[70px] sm:h-[80px] md:h-[90px] px-2">
         <button @click="$router.push('/')" class="flex flex-col items-center justify-center gap-1 w-16 sm:w-20 h-full group">
@@ -207,7 +234,7 @@ const loadNewRound = async () => {
 
     const result: ChartResponse = await response.json();
 
-    // ✅ НОВАЯ ЛОГИКА: проверяем success И message
+    // Проверяем лимит (как в вашем коде)
     if (!result.success) {
       console.error('❌ Лимит исчерпан:', result.message);
       gameState.value = 'limitReached';
@@ -236,8 +263,9 @@ const loadNewRound = async () => {
       volume: Number(c.v.toFixed(2))
     }));
 
+    // Количество скрытых свечей в зависимости от режима
     const hiddenCount = gameMode.value === 'candle' ? 1 : 15;
-    visibleCandlesCount.value = allCandles.value.length - hiddenCount;
+    visibleCandlesCount.value = Math.max(0, allCandles.value.length - hiddenCount);
 
     segmentId.value = result.data.segmentId;
     attemptsLeft.value = result.data.attemptsLeft;
@@ -246,7 +274,8 @@ const loadNewRound = async () => {
     gameResult.value = null;
 
     await nextTick();
-    initChart(allCandles.value.slice(0, visibleCandlesCount.value));
+    // Отображаем только видимые свечи
+    initChart(allCandles.value.slice(0, visibleCandlesCount.value), false);
 
   } catch (error) {
     console.error('❌ Ошибка загрузки:', error);
@@ -354,6 +383,7 @@ const makeGuess = async (direction: 'long' | 'short') => {
   gameResult.value = serverResponse.data.isCorrect ? 'win' : 'lose';
   serverMessage.value = serverResponse.data.message;
 
+  // Конвертируем resultCandles из ответа сервера
   const resultCandles: Candle[] = serverResponse.data.resultCandles.map((c: ServerCandle) => ({
     date: new Date(c.t).toLocaleString('ru-RU', {
       day: '2-digit',
@@ -368,7 +398,13 @@ const makeGuess = async (direction: 'long' | 'short') => {
     volume: Number(c.v.toFixed(2))
   }));
 
-  const fullData = [...allCandles.value.slice(0, visibleCandlesCount.value), ...resultCandles];
+  // Объединяем видимые свечи + новые свечи из результата
+  const fullData = [
+    ...allCandles.value.slice(0, visibleCandlesCount.value),
+    ...resultCandles
+  ];
+
+  // Обновляем chart с полными данными и вертикальной линией
   initChart(fullData, true);
 
   showResultModal.value = true;
@@ -386,12 +422,27 @@ const makeGuess = async (direction: 'long' | 'short') => {
     if (serverResponse.data.isCorrect) {
       score.value += 10;
       streak.value++;
+
+      // Уведомление о правильном ответе
+      addNotification({
+        id: Date.now(),
+        title: 'Верно!',
+        description: `+10 очков • Серия: ${streak.value}`
+      });
     } else {
       streak.value = 0;
     }
 
     await loadNewRound();
   }, 2000);
+};
+
+// Добавляем функцию для уведомлений
+const addNotification = (notification: any) => {
+  notifications.value.push(notification);
+  setTimeout(() => {
+    notifications.value = notifications.value.filter(n => n.id !== notification.id);
+  }, 3000);
 };
 
 const setGameMode = (mode: 'candle' | 'trend') => {

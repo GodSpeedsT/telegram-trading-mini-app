@@ -198,7 +198,7 @@ const loadNewRound = async () => {
     const userId = getUserId();
     const token = getToken();
 
-    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/chart?userId=5`, {
+    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -261,7 +261,7 @@ const sendGuess = async (direction: 'long' | 'short'): Promise<GuessResponse | n
     const userId = getUserId();
     const token = getToken();
 
-    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/guess?userId=5`, {
+    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -124,27 +124,34 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
-// @ts-expect-error: no types
-import { historicalDatasets, getRandomAsset } from '@/features/chartDataService';
-import {
-  updateAllAchievements,
-  loadGameData,
-  saveGameData,
-  type Achievement,
-  type GameStats
-} from '@/pages/achievements/utils/achievements';
 
 const $router = useRouter();
 
-// Интерфейсы
-interface Candle { date: string; open: number; high: number; low: number; close: number; volume: number; }
-interface AssetData { name: string; symbol: string; data: Candle[]; }
-interface AchievementNotification { id: number; title: string; description: string; }
+// Получаем userId и token
+const getUserId = () => {
+  try {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    return userData.telegramId?.toString() || '999999';
+  } catch {
+    return '999999';
+  }
+};
 
-// Константы
-const VISIBLE_COUNT = 30;
-const HIDDEN_CANDLE = 1;
-const HIDDEN_TREND = 15;
+const getToken = () => {
+  return localStorage.getItem('token') || '';
+};
+
+// Интерфейсы
+interface ServerCandle { t: number; o: number; h: number; l: number; c: number; v: number; }
+interface Candle { date: string; open: number; high: number; low: number; close: number; volume: number; }
+interface ChartResponse {
+  success: boolean;
+  data: {
+    segmentId: number;
+    candles: ServerCandle[];
+    attemptsLeft: number;
+  };
+}
 
 // Refs
 const chartRef = ref<HTMLElement | null>(null);
@@ -153,75 +160,126 @@ let resizeObserver: ResizeObserver | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let progressInterval: ReturnType<typeof setInterval> | null = null;
 
-const currentAsset = ref<AssetData | null>(null);
-const visibleData = ref<Candle[]>([]);
-const hiddenData = ref<Candle[]>([]);
-const gameState = ref<'playing' | 'result' | 'loading'>('playing');
+const currentAsset = ref<{ name: string; symbol: string }>({ name: 'BTC/USDT', symbol: 'BTC' });
+const allCandles = ref<Candle[]>([]);
+const visibleCandlesCount = ref(0);
+const gameState = ref<'playing' | 'result' | 'loading'>('loading');
 const gameResult = ref<'win' | 'lose' | null>(null);
 const gameMode = ref<'candle' | 'trend'>('trend');
 const showResultModal = ref(false);
 const progress = ref(100);
+const attemptsLeft = ref(10);
+const segmentId = ref(0);
 
 const score = ref(0);
 const streak = ref(0);
-const notifications = ref<AchievementNotification[]>([]);
+const notifications = ref<any[]>([]);
 
-// Статистика
-const totalWins = ref(0);
-const trendWins = ref(0);
-const candleWins = ref(0);
-const currentTrendStreak = ref(0);
-const currentCandleStreak = ref(0);
+// Загрузка нового раунда с сервера
+const loadNewRound = async () => {
+  console.log('🔄 Загрузка нового раунда...');
+  gameState.value = 'loading';
+  showResultModal.value = false;
 
-const notify = (achievement: Achievement) => {
-  notifications.value.push({
-    id: Date.now() + Math.random(),
-    title: achievement.title,
-    description: achievement.description
-  });
-  setTimeout(() => {
-    if (notifications.value.length > 0) notifications.value.shift();
-  }, 5000);
+  try {
+    const userId = getUserId();
+    const token = getToken();
+    console.log('📱 userId:', userId);
+    console.log('🔑 Token:', token ? 'есть' : 'нет');
+
+    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/chart?userId=5`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result: ChartResponse = await response.json();
+    console.log('📊 Ответ сервера:', result);
+
+    if (!result.success || !result.data.candles || result.data.candles.length === 0) {
+      throw new Error('Нет данных свечей');
+    }
+
+    // Конвертируем серверные данные
+    allCandles.value = result.data.candles.map((c: ServerCandle) => ({
+      date: new Date(c.t).toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      open: Number(c.o.toFixed(2)),
+      high: Number(c.h.toFixed(2)),
+      low: Number(c.l.toFixed(2)),
+      close: Number(c.c.toFixed(2)),
+      volume: Number(c.v.toFixed(2))
+    }));
+
+    console.log('🕯️ Всего свечей:', allCandles.value.length);
+
+    // Определяем сколько скрывать в зависимости от режима
+    const hiddenCount = gameMode.value === 'candle' ? 1 : 15;
+    visibleCandlesCount.value = allCandles.value.length - hiddenCount;
+
+    if (visibleCandlesCount.value < 10) {
+      throw new Error('Недостаточно данных для отображения');
+    }
+
+    segmentId.value = result.data.segmentId;
+    attemptsLeft.value = result.data.attemptsLeft;
+
+    gameState.value = 'playing';
+    gameResult.value = null;
+
+    await nextTick();
+    console.log('📈 Рисуем график, видимых свечей:', visibleCandlesCount.value);
+    initChart(allCandles.value.slice(0, visibleCandlesCount.value));
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки раунда:', error);
+    safeShowAlert('Ошибка загрузки данных. Проверьте токен.');
+    setTimeout(loadNewRound, 2000);
+  }
 };
 
-const syncGameData = () => {
-  const stats: GameStats = {
-    totalWins: totalWins.value,
-    trendWins: trendWins.value,
-    candleWins: candleWins.value,
-    currentTrendStreak: currentTrendStreak.value,
-    currentCandleStreak: currentCandleStreak.value,
-    totalScore: score.value,
-    currentStreak: streak.value
-  };
-  saveGameData(score.value, stats);
-};
-
-const setGameMode = (mode: 'candle' | 'trend') => {
-  if (gameState.value !== 'playing') return;
-  gameMode.value = mode;
-  if (mode === 'candle') currentTrendStreak.value = 0;
-  else currentCandleStreak.value = 0;
-  syncGameData();
-  loadNewRound();
+const safeShowAlert = (message: string) => {
+  console.warn(message);
 };
 
 const initChart = (data: Candle[], showResultLine = false) => {
-  if (!chartRef.value) return;
-  if (chartInstance) chartInstance.dispose();
+  console.log('🎨 initChart вызван с данными:', data.length, 'свечей');
+
+  if (!chartRef.value) {
+    console.error('❌ chartRef не найден');
+    return;
+  }
+
+  if (chartInstance) {
+    chartInstance.dispose();
+  }
+
   chartInstance = echarts.init(chartRef.value);
+  console.log('✅ ECharts инициализирован');
 
   const dates = data.map(c => c.date);
   const values = data.map(c => [c.open, c.close, c.low, c.high]);
-  const splitIndex = showResultLine ? visibleData.value.length : -1;
+  const splitIndex = showResultLine ? data.length - 1 : -1;
+
+  console.log('📋 Даты:', dates.slice(-3));
+  console.log('💰 Значения:', values.slice(-3));
 
   const option: echarts.EChartsOption = {
     backgroundColor: '#131722',
     grid: { left: 10, right: 5, top: 40, bottom: 60, containLabel: false },
     tooltip: {
       trigger: 'axis',
-      formatter: (params: unknown) => {
-        const p = (Array.isArray(params) ? params[0] : params) as { dataIndex: number };
+      formatter: (params: any) => {
+        const p = Array.isArray(params) ? params[0] : params;
         const candle = data[p.dataIndex];
         if (!candle) return '';
         return `<div style="font-size:11px;">${candle.date}<br/>O: ${candle.open}<br/>C: ${candle.close}</div>`;
@@ -242,123 +300,86 @@ const initChart = (data: Candle[], showResultLine = false) => {
     series: [{
       type: 'candlestick',
       data: values,
-      itemStyle: { color: '#0ecb81', color0: '#f6465d', borderColor: '#0ecb81', borderColor0: '#f6465d' },
+      itemStyle: {
+        color: '#0ecb81',
+        color0: '#f6465d',
+        borderColor: '#0ecb81',
+        borderColor0: '#f6465d'
+      },
       markLine: showResultLine ? {
         symbol: ['none', 'none'],
-        data: [{ xAxis: splitIndex - 1, lineStyle: { color: '#8b5cf6', type: 'dashed' } }]
+        data: [{ xAxis: splitIndex, lineStyle: { color: '#8b5cf6', type: 'dashed' } }]
       } : undefined
     }]
   };
+
   chartInstance.setOption(option);
+  console.log('✅ График отрисован');
 };
 
-const loadNewRound = () => {
-  showResultModal.value = false;
-  gameState.value = 'loading';
-  const random = getRandomAsset();
-  const asset = historicalDatasets?.[random.category]?.[random.assetKey];
-  const hiddenCount = gameMode.value === 'candle' ? HIDDEN_CANDLE : HIDDEN_TREND;
-
-  if (!asset || asset.data.length < (VISIBLE_COUNT + hiddenCount)) {
-    loadNewRound();
-    return;
-  }
-
-  currentAsset.value = asset;
-  gameState.value = 'playing';
-  gameResult.value = null;
-  const startIndex = Math.floor(Math.random() * (asset.data.length - (VISIBLE_COUNT + hiddenCount)));
-  visibleData.value = asset.data.slice(startIndex, startIndex + VISIBLE_COUNT);
-  hiddenData.value = asset.data.slice(startIndex + VISIBLE_COUNT, startIndex + VISIBLE_COUNT + hiddenCount);
-  nextTick(() => initChart(visibleData.value));
-};
-
-const makeGuess = (direction: 'long' | 'short') => {
+const makeGuess = async (direction: 'long' | 'short') => {
   if (gameState.value !== 'playing') return;
 
-  const lastVisible = visibleData.value[visibleData.value.length - 1];
-  const lastHidden = hiddenData.value[hiddenData.value.length - 1];
-
-  if (!lastVisible || !lastHidden) return;
+  console.log('🎯 Пользователь выбрал:', direction);
 
   gameState.value = 'result';
+
+  const lastVisible = allCandles.value[visibleCandlesCount.value - 1];
+  const lastHidden = allCandles.value[allCandles.value.length - 1];
+
+  console.log('📊 Последняя видимая:', lastVisible?.close);
+  console.log('📊 Последняя скрытая:', lastHidden?.close);
+
   const isPriceUp = lastHidden.close >= lastVisible.close;
   const isWin = (direction === 'long' && isPriceUp) || (direction === 'short' && !isPriceUp);
 
-  if (isWin) {
-    gameResult.value = 'win';
-    score.value += 10;
-    streak.value++;
-    totalWins.value++;
+  console.log('✅ Выигрыш:', isWin, 'Цена выросла:', isPriceUp);
 
-    if (gameMode.value === 'trend') {
-      trendWins.value++;
-      currentTrendStreak.value++;
-      currentCandleStreak.value = 0;
-    } else {
-      candleWins.value++;
-      currentCandleStreak.value++;
-      currentTrendStreak.value = 0;
-    }
+  gameResult.value = isWin ? 'win' : 'lose';
 
-    // НОВАЯ ЛОГИКА ОБНОВЛЕНИЯ
-    const newlyUnlocked = updateAllAchievements({
-      totalWins: totalWins.value,
-      trendWins: trendWins.value,
-      candleWins: candleWins.value,
-      currentTrendStreak: currentTrendStreak.value,
-      currentCandleStreak: currentCandleStreak.value,
-      totalScore: score.value,
-      currentStreak: streak.value
-    });
+  // Показываем все свечи с линией разделения
+  initChart(allCandles.value, true);
 
-    // Показываем уведомления только для тех, что открылись сейчас
-    newlyUnlocked.forEach(notify);
-
-  } else {
-    gameResult.value = 'lose';
-    streak.value = 0;
-    currentTrendStreak.value = 0;
-    currentCandleStreak.value = 0;
-
-    // Сбрасываем стрик в базе
-    updateAllAchievements({
-      totalWins: totalWins.value,
-      trendWins: trendWins.value,
-      candleWins: candleWins.value,
-      currentTrendStreak: 0,
-      currentCandleStreak: 0,
-      totalScore: score.value,
-      currentStreak: 0
-    });
-  }
-
-  syncGameData();
-  initChart([...visibleData.value, ...hiddenData.value], true);
   showResultModal.value = true;
   progress.value = 100;
 
   if (progressInterval) clearInterval(progressInterval);
-  progressInterval = setInterval(() => { progress.value -= 1; }, 10);
-  timer = setTimeout(() => {
+  progressInterval = setInterval(() => {
+    progress.value -= 1;
+  }, 10);
+
+  timer = setTimeout(async () => {
     showResultModal.value = false;
     if (progressInterval) clearInterval(progressInterval);
-  }, 1000);
+
+    // Обновляем счет
+    if (isWin) {
+      score.value += 10;
+      streak.value++;
+    } else {
+      streak.value = 0;
+    }
+
+    // Загружаем новый раунд
+    await loadNewRound();
+  }, 1500);
 };
 
-onMounted(() => {
-  const data = loadGameData();
-  score.value = data.score;
-  const s = data.stats;
-  totalWins.value = s.totalWins || 0;
-  trendWins.value = s.trendWins || 0;
-  candleWins.value = s.candleWins || 0;
-  currentTrendStreak.value = s.currentTrendStreak || 0;
-  currentCandleStreak.value = s.currentCandleStreak || 0;
-
+const setGameMode = (mode: 'candle' | 'trend') => {
+  if (gameState.value !== 'playing') return;
+  gameMode.value = mode;
   loadNewRound();
+};
+
+onMounted(async () => {
+  console.log('🚀 Компонент смонтирован');
+  console.log('🔑 Токен в localStorage:', !!getToken());
+  await loadNewRound();
+
   if (chartRef.value) {
-    resizeObserver = new ResizeObserver(() => chartInstance?.resize());
+    resizeObserver = new ResizeObserver(() => {
+      chartInstance?.resize();
+    });
     resizeObserver.observe(chartRef.value);
   }
 });
@@ -370,3 +391,4 @@ onUnmounted(() => {
   if (progressInterval) clearInterval(progressInterval);
 });
 </script>
+

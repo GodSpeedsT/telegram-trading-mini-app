@@ -140,22 +140,12 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
+import { useAuthStore } from '@/stores/auth';
+import { useGameStore } from '@/stores/game';
 
 const $router = useRouter();
-
-// Получаем userId и token
-const getUserId = () => {
-  try {
-    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    return userData.telegramId?.toString() || '999999';
-  } catch {
-    return '999999';
-  }
-};
-
-const getToken = () => {
-  return localStorage.getItem('token') || '';
-};
+const authStore = useAuthStore();
+const gameStore = useGameStore();
 
 // Интерфейсы
 interface ServerCandle { t: number; o: number; h: number; l: number; c: number; v: number; }
@@ -197,44 +187,55 @@ const progress = ref(100);
 const attemptsLeft = ref(10);
 const segmentId = ref(0);
 const serverMessage = ref('');
-const limitReached = ref(false);
-
-const score = ref(0);
-const streak = ref(0);
 const notifications = ref<any[]>([]);
 
-const safeShowAlert = (message: string) => {
-  console.warn('🚨', message);
-  // TODO: Telegram alert
-};
+const score = gameStore.score;
+const streak = gameStore.streak;
 
-// Загрузка нового раунда с сервера
-const loadNewRound = async () => {
-  console.log('🔄 Загрузка нового раунда...');
-  gameState.value = 'loading';
-  showResultModal.value = false;
-  limitReached.value = false;
+const apiRequest = async (url: string, options: RequestInit = {}) => {
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${authStore.getToken()}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  };
 
   try {
-    const userId = getUserId();
-    const token = getToken();
+    const response = await fetch(url, config);
+    const result = await response.json();
 
-    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    if (result.message?.includes('JWT expired') || response.status === 401) {
+      await authStore.authenticateUser();
+      config.headers = { 'Authorization': `Bearer ${authStore.getToken()}`, 'Content-Type': 'application/json' };
+      const retryResponse = await fetch(url, config);
+      return await retryResponse.json();
+    }
 
-    const result: ChartResponse = await response.json();
+    return result;
+  } catch (error: any) {
+    console.error('❌ API ошибка:', error);
+    authStore.safeShowAlert('Ошибка сети');
+    throw error;
+  }
+};
 
-    // ✅ НОВАЯ ЛОГИКА: проверяем success И message
+const loadNewRound = async () => {
+  gameState.value = 'loading';
+  showResultModal.value = false;
+
+  try {
+    const userId = authStore.getUserId();
+    const result: ChartResponse = await apiRequest(
+      `https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}`
+    );
+
     if (!result.success) {
-      console.error('❌ Лимит исчерпан:', result.message);
+      console.error('❌ Лимит:', result.message);
       gameState.value = 'limitReached';
       serverMessage.value = result.message || 'Дневной лимит исчерпан';
-      limitReached.value = true;
-      safeShowAlert(serverMessage.value);
+      authStore.safeShowAlert(serverMessage.value);
       return;
     }
 
@@ -242,13 +243,10 @@ const loadNewRound = async () => {
       throw new Error('Нет данных свечей');
     }
 
-    // Конвертируем серверные данные
+    // Конвертация данных
     allCandles.value = result.data.candles.map((c: ServerCandle) => ({
       date: new Date(c.t).toLocaleString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
       }),
       open: Number(c.o.toFixed(2)),
       high: Number(c.h.toFixed(2)),
@@ -259,7 +257,6 @@ const loadNewRound = async () => {
 
     const hiddenCount = gameMode.value === 'candle' ? 1 : 15;
     visibleCandlesCount.value = allCandles.value.length - hiddenCount;
-
     segmentId.value = result.data.segmentId;
     attemptsLeft.value = result.data.attemptsLeft;
 
@@ -270,36 +267,82 @@ const loadNewRound = async () => {
     initChart(allCandles.value.slice(0, visibleCandlesCount.value));
 
   } catch (error) {
-    console.error('❌ Ошибка загрузки:', error);
-    safeShowAlert('Ошибка сети. Повтор через 2 сек...');
+    console.error('❌ Загрузка:', error);
     setTimeout(loadNewRound, 2000);
   }
 };
 
-// Отправка угадывания на сервер
-const sendGuess = async (direction: 'long' | 'short'): Promise<GuessResponse | null> => {
+// Угадывание
+const makeGuess = async (direction: 'long' | 'short') => {
+  if (gameState.value !== 'playing') return;
+
+  gameState.value = 'result';
+
   try {
-    const userId = getUserId();
-    const token = getToken();
+    const userId = authStore.getUserId();
+    const result: GuessResponse = await apiRequest(
+      `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ segmentId: segmentId.value, direction })
+      }
+    );
 
-    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        segmentId: segmentId.value,
-        direction
-      })
-    });
+    if (!result.success) {
+      gameState.value = 'playing';
+      authStore.safeShowAlert('Ошибка сервера');
+      return;
+    }
 
-    const result: GuessResponse = await response.json();
-    return result;
+    gameResult.value = result.data.isCorrect ? 'win' : 'lose';
+    serverMessage.value = result.data.message;
+
+    // Показываем результат
+    const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
+      date: new Date(c.t).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      }),
+      open: Number(c.o.toFixed(2)),
+      high: Number(c.h.toFixed(2)),
+      low: Number(c.l.toFixed(2)),
+      close: Number(c.c.toFixed(2)),
+      volume: Number(c.v.toFixed(2))
+    }));
+
+    const fullData = [...allCandles.value.slice(0, visibleCandlesCount.value), ...resultCandles];
+    initChart(fullData, true);
+
+    showResultModal.value = true;
+    progress.value = 100;
+
+    if (progressInterval) clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+      progress.value -= 1;
+    }, 10);
+
+    timer = setTimeout(async () => {
+      showResultModal.value = false;
+      if (progressInterval) clearInterval(progressInterval);
+
+      if (result.data.isCorrect) {
+        gameStore.addScore(10);
+        gameStore.incrementStreak();
+      } else {
+        gameStore.resetStreak();
+      }
+
+      await loadNewRound();
+    }, 2000);
+
   } catch (error) {
-    console.error('❌ Ошибка отправки:', error);
-    return null;
+    gameState.value = 'playing';
   }
+};
+
+const setGameMode = (mode: 'candle' | 'trend') => {
+  if (gameState.value !== 'playing') return;
+  gameMode.value = mode;
+  loadNewRound();
 };
 
 const initChart = (data: Candle[], showResultLine = false) => {
@@ -355,73 +398,8 @@ const initChart = (data: Candle[], showResultLine = false) => {
   chartInstance.setOption(option);
 };
 
-// ✅ ДОБАВЬТЕ ЭТО В TEMPLATE в секцию кнопок:
-const makeGuess = async (direction: 'long' | 'short') => {
-  if (gameState.value !== 'playing') return;
-
-  console.log('🎯 Отправляем на сервер:', direction, segmentId.value);
-
-  gameState.value = 'result';
-
-  const serverResponse = await sendGuess(direction);
-
-  if (!serverResponse?.success) {
-    console.error('❌ Ошибка сервера');
-    gameState.value = 'playing';
-    safeShowAlert('Ошибка сервера');
-    return;
-  }
-
-  gameResult.value = serverResponse.data.isCorrect ? 'win' : 'lose';
-  serverMessage.value = serverResponse.data.message;
-
-  const resultCandles: Candle[] = serverResponse.data.resultCandles.map((c: ServerCandle) => ({
-    date: new Date(c.t).toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }),
-    open: Number(c.o.toFixed(2)),
-    high: Number(c.h.toFixed(2)),
-    low: Number(c.l.toFixed(2)),
-    close: Number(c.c.toFixed(2)),
-    volume: Number(c.v.toFixed(2))
-  }));
-
-  const fullData = [...allCandles.value.slice(0, visibleCandlesCount.value), ...resultCandles];
-  initChart(fullData, true);
-
-  showResultModal.value = true;
-  progress.value = 100;
-
-  if (progressInterval) clearInterval(progressInterval);
-  progressInterval = setInterval(() => {
-    progress.value -= 1;
-  }, 10);
-
-  timer = setTimeout(async () => {
-    showResultModal.value = false;
-    if (progressInterval) clearInterval(progressInterval);
-
-    if (serverResponse.data.isCorrect) {
-      score.value += 10;
-      streak.value++;
-    } else {
-      streak.value = 0;
-    }
-
-    await loadNewRound();
-  }, 2000);
-};
-
-const setGameMode = (mode: 'candle' | 'trend') => {
-  if (gameState.value !== 'playing') return;
-  gameMode.value = mode;
-  loadNewRound();
-};
-
 onMounted(async () => {
+  gameStore.loadGameData();
   await loadNewRound();
 
   if (chartRef.value) {
@@ -433,10 +411,13 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  gameStore.saveGameData();
+
   if (chartInstance) chartInstance.dispose();
   if (resizeObserver) resizeObserver.disconnect();
   if (timer) clearTimeout(timer);
   if (progressInterval) clearInterval(progressInterval);
 });
 </script>
+
 

@@ -5,6 +5,7 @@ import {RealTimeChart} from '@/pages/real-time'
 import {Achievements} from '@/pages/achievements'
 import { Account } from '@/pages/account'
 import {Leaderboard} from '@/pages/leaderboard'
+import Stats from '@/pages/account/Stats.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/leaderboard',
       name: 'leaderboard',
       component: Leaderboard,
+    },
+     {
+      path: '/stats',
+      name: 'stats',
+      component: Stats,
     },
   ],
 })

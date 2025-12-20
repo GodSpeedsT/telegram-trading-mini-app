@@ -33,7 +33,7 @@ const authenticateUser = async () => {
     telegramId: user.id,
     username: user.username || '',
     firstName: user.first_name || '',
-    initData: tg.initData
+    initData: tg.initDataUnsafe
   })
 
   try {
@@ -42,7 +42,7 @@ const authenticateUser = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        initData: tg.initData,
+        initData: tg.initDataUnsafe,
         telegramId: user.id,
         username: user.username || '',
         firstName: user.first_name || ''

@@ -1,5 +1,8 @@
 <template>
   <div class="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-zinc-950 font-sans text-white safe-area-padding pb-nav">
+    <!-- Фоновый паттерн с чётким кубком -->
+    <div class="absolute inset-0 w-full h-full bg-trophy-pattern pointer-events-none"></div>
+    
     <div class="relative w-full max-w-4xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
       <div class="absolute inset-0 bg-gradient-to-br from-green-900/20 via-zinc-900/80 to-black/50 pointer-events-none"></div>
       
@@ -121,6 +124,16 @@ onMounted(() => { achievements.value = loadAchievements(); });
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #4ade80;
   border-radius: 20px;
+}
+
+/* Паттерн с чётким кубком в левом верхнем углу */
+.bg-trophy-pattern {
+  background-color: #09090b;
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3C!-- Чёткий кубок с видимыми очертаниями --%3E%3Cg transform='translate(30, 30)'%3E%3C!-- Основание кубка --%3E%3Cellipse cx='70' cy='120' rx='25' ry='8' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Тело кубка --%3E%3Cpath d='M50 50 Q70 30 90 50 L90 100 Q70 120 50 100 Z' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Рукоятки --%3E%3Cpath d='M45 70 Q30 65 25 80 T45 95' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3Cpath d='M95 70 Q110 65 115 80 T95 95' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Верхняя часть --%3E%3Cellipse cx='70' cy='50' rx='20' ry='5' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Детализация --%3E%3Cline x1='60' y1='60' x2='80' y2='60' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Cline x1='65' y1='70' x2='75' y2='70' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Cline x1='60' y1='80' x2='80' y2='80' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Cline x1='65' y1='90' x2='75' y2='90' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Ccircle cx='70' cy='55' r='2' fill='%23fbbf24' opacity='0.15'/%3E%3C/g%3E%3C!-- Световые блики для объема --%3E%3Cpath d='M55 55 Q70 45 85 55' fill='none' stroke='%23fde047' stroke-width='1' opacity='0.1'/%3E%3Cpath d='M85 85 Q70 95 55 85' fill='none' stroke='%23d97706' stroke-width='1' opacity='0.1'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+  background-repeat: repeat;
+  background-position: left top;
+  opacity: 0.9;
 }
 
 /* Улучшение для маленьких экранов */

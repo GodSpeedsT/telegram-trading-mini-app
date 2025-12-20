@@ -62,7 +62,8 @@ const collectUserData = () => {
 const authenticateUser = async () => {
   try {
     const userData = collectUserData()
-    console.log('[AUTH] Данные:', userData)
+
+    localStorage.setItem('userData', JSON.stringify(userData));
 
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
@@ -123,8 +124,12 @@ onMounted(async () => {
   try {
     initWebApp()
 
-    if (localStorage.getItem('token')) {
-      return
+    // ✅ Проверяем наличие userData ТАКЖЕ
+    const hasToken = !!localStorage.getItem('token');
+    const hasUserData = !!localStorage.getItem('userData');
+
+    if (hasToken && hasUserData) {
+      return;
     }
 
     await authenticateUser()

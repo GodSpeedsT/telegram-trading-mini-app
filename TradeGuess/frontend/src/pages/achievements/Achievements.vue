@@ -57,17 +57,6 @@
           </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="mt-6 sm:mt-8 md:mt-10 grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 text-center">
-          <div v-for="(cat, name) in stats.byCategory" :key="name" 
-               class="bg-zinc-800/50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-800/50">
-            <div class="text-xl sm:text-2xl md:text-2xl font-black text-emerald-400">{{ cat.unlocked }}/{{ cat.total }}</div>
-            <div class="text-[9px] sm:text-[10px] font-bold text-zinc-500 uppercase mt-1 truncate">
-              {{ name }}
-            </div>
-          </div>
-        </div>
-
         <!-- Reset Button -->
         <div class="mt-6 sm:mt-8">
           <button @click="handleReset" 

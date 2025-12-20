@@ -17,6 +17,7 @@ public class ChartResponse implements Serializable {
     private Long segmentId;
     private List<Candle> candles;
     private Integer attemptsLeft;
+    private Boolean isAdmin;
 
     @Builder
     @NoArgsConstructor

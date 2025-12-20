@@ -52,6 +52,7 @@ public class StatsService {
                 .attemptsLeft(attemptsLeft)
                 .currentStreak(currentStreak)
                 .bestStreak(bestStreak)
+                .isAdmin(user.getRole().isAdmin())
                 .build();
     }
 

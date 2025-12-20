@@ -18,6 +18,7 @@ public class GuessResponse implements Serializable {
     private List<Candle> resultCandles;
     private String message;
     private Double priceChangePercent;
+    private Boolean isAdmin;
 
     @Builder
     @NoArgsConstructor

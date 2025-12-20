@@ -45,7 +45,7 @@ public class GameService {
 
         Long userId = user.getId();
 
-        boolean isAdmin = user.getRole().equals("SUPER_ADMIN") || user.getRole().equals("ADMIN");
+        boolean isAdmin = user.getRole().isAdmin();
         if (!isAdmin) {
             Integer attemptsToday = getDailyAttempts(userId);
 
@@ -66,6 +66,7 @@ public class GameService {
                 .segmentId(segment.getId())
                 .candles(parseCandles(segment.getDisplayCandles(), ChartResponse.Candle.class))
                 .attemptsLeft(Math.max(0, attemptsLeft))
+                .isAdmin(isAdmin)
                 .build();
     }
 
@@ -75,7 +76,7 @@ public class GameService {
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + telegramId));
 
         Long userId = user.getId();
-        boolean isAdmin = user.getRole().equals("SUPER_ADMIN") || user.getRole().equals("ADMIN");
+        boolean isAdmin = user.getRole().isAdmin();
 
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
                 .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
@@ -94,6 +95,7 @@ public class GameService {
                 .message(isCorrect ? "Правильно!" : "Неправильно!")
                 .resultCandles(parseCandles(segment.getResultCandles(), GuessResponse.Candle.class))
                 .priceChangePercent(calculatePriceChangePercent(segment))
+                .isAdmin(isAdmin)
                 .build();
     }
 

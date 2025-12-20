@@ -19,4 +19,5 @@ public class StatsResponse implements Serializable {
     private Integer bestStreak;
     private Integer dailyAttempts;
     private Integer attemptsLeft;
+    private Boolean isAdmin;
 }

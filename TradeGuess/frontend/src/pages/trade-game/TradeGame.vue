@@ -56,17 +56,32 @@
       </div>
     </div>
     <div class="px-4 pt-4 z-20 shrink-0 h-24 sm:h-28 md:h-32 bg-zinc-950 flex items-start">
+      <!-- ✅ КНОПКИ ВВЕРХ/ВНИЗ -->
       <div v-if="gameState === 'playing'" class="grid grid-cols-2 gap-4 h-16 sm:h-20 md:h-24 w-full">
-        <!-- кнопки ВВЕРХ/ВНИЗ -->
+        <button @click="makeGuess('long')"
+                class="h-full bg-emerald-500/10 hover:bg-emerald-500/20 border-2 border-emerald-500/50 hover:border-emerald-500 text-emerald-500 rounded-2xl flex flex-col items-center justify-center active:scale-[0.96] transition-all group backdrop-blur-sm gap-0.5">
+          <svg class="w-6 h-6 sm:w-8 sm:h-8 mb-1 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+          <span class="text-lg sm:text-xl md:text-2xl font-black tracking-wider group-hover:text-emerald-400">ВВЕРХ</span>
+        </button>
+        <button @click="makeGuess('short')"
+                class="h-full bg-rose-500/10 hover:bg-rose-500/20 border-2 border-rose-500/50 hover:border-rose-500 text-rose-500 rounded-2xl flex flex-col items-center justify-center active:scale-[0.96] transition-all group backdrop-blur-sm gap-0.5">
+          <svg class="w-6 h-6 sm:w-8 sm:h-8 mb-1 group-hover:translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+          <span class="text-lg sm:text-xl md:text-2xl font-black tracking-wider group-hover:text-rose-400">ВНИЗ</span>
+        </button>
       </div>
+
+      <!-- ✅ ЛИМИТ ИСЧЕРПАН -->
       <div v-else-if="gameState === 'limitReached'" class="h-16 sm:h-20 md:h-24 w-full flex flex-col items-center justify-center text-center p-4">
         <div class="text-xl font-black text-yellow-400 mb-2">⏰</div>
         <div class="text-sm font-bold text-zinc-300 mb-1">{{ serverMessage }}</div>
         <div class="text-xs text-zinc-500">Попробуйте завтра!</div>
       </div>
-      <div v-else-if="gameState === 'result' && !showResultModal" class="h-16 sm:h-20 md:h-24 w-full">
-        <!-- кнопка Дальше -->
-      </div>
+
+      <!-- ✅ КНОПКА ДАЛЬШЕ -->
       <div v-else-if="gameState === 'result' && !showResultModal" class="h-16 sm:h-20 md:h-24 w-full">
         <button @click="loadNewRound"
                 class="w-full h-full bg-white hover:bg-zinc-200 text-black rounded-2xl font-black text-xl sm:text-2xl md:text-3xl shadow-[0_4px_0_#a1a1aa] active:scale-[0.97] transition-all flex items-center justify-center gap-3">
@@ -76,7 +91,13 @@
           </svg>
         </button>
       </div>
+
+      <!-- ✅ ЛОАДЕР -->
+      <div v-else class="h-16 sm:h-20 md:h-24 w-full flex items-center justify-center">
+        <div class="w-8 h-8 border-4 border-zinc-600 border-t-yellow-400 rounded-full animate-spin"></div>
+      </div>
     </div>
+
     <div class="fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-xl border-t border-white/5 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       <div class="flex justify-around items-center h-[70px] sm:h-[80px] md:h-[90px] px-2">
         <button @click="$router.push('/')" class="flex flex-col items-center justify-center gap-1 w-16 sm:w-20 h-full group">

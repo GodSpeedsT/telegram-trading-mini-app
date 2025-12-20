@@ -75,19 +75,6 @@
           </div>
         </button>
 
-        <!-- Выход -->
-        <button @click="logout" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px]">
-          <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-rose-400 bg-rose-500/10 rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-7 lg:h-7 xl:w-8 xl:h-8 2xl:w-9 2xl:h-9">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-          </div>
-          <div class="text-center flex flex-col">
-            <span class="text-white font-bold leading-tight text-xl sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl 2xl:text-3xl">Выйти</span>
-            <span class="text-zinc-400 font-medium text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl">Завершить сеанс</span>
-          </div>
-        </button>
-
         <!-- Назад -->
         <button @click="goBack" class="relative w-full bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-500/50 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[60px] sm:h-[64px] md:h-[68px] lg:h-[72px] xl:h-[76px] 2xl:h-[80px] mt-2">
           <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-zinc-400 bg-zinc-500/5 rounded-full w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 2xl:w-14 2xl:h-14">
@@ -169,15 +156,6 @@ function viewStats() {
   router.push({ path: '/stats' })
 }
 
-function openSettings() {
-  router.push({ path: '/settings' })
-}
-
-function logout() {
-  // Логика выхода
-  console.log('Выход из аккаунта')
-  router.push({ path: '/login' })
-}
 
 function goBack() {
   routerInstance.back()

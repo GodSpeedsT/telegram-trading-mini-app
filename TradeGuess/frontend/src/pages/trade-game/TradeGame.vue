@@ -57,20 +57,15 @@
     </div>
     <div class="px-4 pt-4 z-20 shrink-0 h-24 sm:h-28 md:h-32 bg-zinc-950 flex items-start">
       <div v-if="gameState === 'playing'" class="grid grid-cols-2 gap-4 h-16 sm:h-20 md:h-24 w-full">
-        <button @click="makeGuess('long')"
-                class="h-full bg-emerald-500/10 hover:bg-emerald-500/20 border-2 border-emerald-500/50 hover:border-emerald-500 text-emerald-500 rounded-2xl flex flex-col items-center justify-center active:scale-[0.96] transition-all group backdrop-blur-sm gap-0.5">
-          <svg class="w-6 h-6 sm:w-8 sm:h-8 mb-1 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-          <span class="text-lg sm:text-xl md:text-2xl font-black tracking-wider group-hover:text-emerald-400">ВВЕРХ</span>
-        </button>
-        <button @click="makeGuess('short')"
-                class="h-full bg-rose-500/10 hover:bg-rose-500/20 border-2 border-rose-500/50 hover:border-rose-500 text-rose-500 rounded-2xl flex flex-col items-center justify-center active:scale-[0.96] transition-all group backdrop-blur-sm gap-0.5">
-          <svg class="w-6 h-6 sm:w-8 sm:h-8 mb-1 group-hover:translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-          <span class="text-lg sm:text-xl md:text-2xl font-black tracking-wider group-hover:text-rose-400">ВНИЗ</span>
-        </button>
+        <!-- кнопки ВВЕРХ/ВНИЗ -->
+      </div>
+      <div v-else-if="gameState === 'limitReached'" class="h-16 sm:h-20 md:h-24 w-full flex flex-col items-center justify-center text-center p-4">
+        <div class="text-xl font-black text-yellow-400 mb-2">⏰</div>
+        <div class="text-sm font-bold text-zinc-300 mb-1">{{ serverMessage }}</div>
+        <div class="text-xs text-zinc-500">Попробуйте завтра!</div>
+      </div>
+      <div v-else-if="gameState === 'result' && !showResultModal" class="h-16 sm:h-20 md:h-24 w-full">
+        <!-- кнопка Дальше -->
       </div>
       <div v-else-if="gameState === 'result' && !showResultModal" class="h-16 sm:h-20 md:h-24 w-full">
         <button @click="loadNewRound"
@@ -146,10 +141,20 @@ interface ServerCandle { t: number; o: number; h: number; l: number; c: number; 
 interface Candle { date: string; open: number; high: number; low: number; close: number; volume: number; }
 interface ChartResponse {
   success: boolean;
-  data: {
+  data?: {
     segmentId: number;
     candles: ServerCandle[];
     attemptsLeft: number;
+  };
+  message?: string;
+}
+interface GuessResponse {
+  success: boolean;
+  data: {
+    isCorrect: boolean;
+    resultCandles: ServerCandle[];
+    message: string;
+    priceChangePercent: number;
   };
 }
 
@@ -163,29 +168,35 @@ let progressInterval: ReturnType<typeof setInterval> | null = null;
 const currentAsset = ref<{ name: string; symbol: string }>({ name: 'BTC/USDT', symbol: 'BTC' });
 const allCandles = ref<Candle[]>([]);
 const visibleCandlesCount = ref(0);
-const gameState = ref<'playing' | 'result' | 'loading'>('loading');
+const gameState = ref<'playing' | 'result' | 'loading' | 'limitReached'>('loading');
 const gameResult = ref<'win' | 'lose' | null>(null);
 const gameMode = ref<'candle' | 'trend'>('trend');
 const showResultModal = ref(false);
 const progress = ref(100);
 const attemptsLeft = ref(10);
 const segmentId = ref(0);
+const serverMessage = ref('');
+const limitReached = ref(false);
 
 const score = ref(0);
 const streak = ref(0);
 const notifications = ref<any[]>([]);
+
+const safeShowAlert = (message: string) => {
+  console.warn('🚨', message);
+  // TODO: Telegram alert
+};
 
 // Загрузка нового раунда с сервера
 const loadNewRound = async () => {
   console.log('🔄 Загрузка нового раунда...');
   gameState.value = 'loading';
   showResultModal.value = false;
+  limitReached.value = false;
 
   try {
     const userId = getUserId();
     const token = getToken();
-    console.log('📱 userId:', userId);
-    console.log('🔑 Token:', token ? 'есть' : 'нет');
 
     const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/chart?userId=5`, {
       headers: {
@@ -194,14 +205,19 @@ const loadNewRound = async () => {
       }
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const result: ChartResponse = await response.json();
+
+    // ✅ НОВАЯ ЛОГИКА: проверяем success И message
+    if (!result.success) {
+      console.error('❌ Лимит исчерпан:', result.message);
+      gameState.value = 'limitReached';
+      serverMessage.value = result.message || 'Дневной лимит исчерпан';
+      limitReached.value = true;
+      safeShowAlert(serverMessage.value);
+      return;
     }
 
-    const result: ChartResponse = await response.json();
-    console.log('📊 Ответ сервера:', result);
-
-    if (!result.success || !result.data.candles || result.data.candles.length === 0) {
+    if (!result.data?.candles?.length) {
       throw new Error('Нет данных свечей');
     }
 
@@ -220,15 +236,8 @@ const loadNewRound = async () => {
       volume: Number(c.v.toFixed(2))
     }));
 
-    console.log('🕯️ Всего свечей:', allCandles.value.length);
-
-    // Определяем сколько скрывать в зависимости от режима
     const hiddenCount = gameMode.value === 'candle' ? 1 : 15;
     visibleCandlesCount.value = allCandles.value.length - hiddenCount;
-
-    if (visibleCandlesCount.value < 10) {
-      throw new Error('Недостаточно данных для отображения');
-    }
 
     segmentId.value = result.data.segmentId;
     attemptsLeft.value = result.data.attemptsLeft;
@@ -237,41 +246,50 @@ const loadNewRound = async () => {
     gameResult.value = null;
 
     await nextTick();
-    console.log('📈 Рисуем график, видимых свечей:', visibleCandlesCount.value);
     initChart(allCandles.value.slice(0, visibleCandlesCount.value));
 
   } catch (error) {
-    console.error('❌ Ошибка загрузки раунда:', error);
-    safeShowAlert('Ошибка загрузки данных. Проверьте токен.');
+    console.error('❌ Ошибка загрузки:', error);
+    safeShowAlert('Ошибка сети. Повтор через 2 сек...');
     setTimeout(loadNewRound, 2000);
   }
 };
 
-const safeShowAlert = (message: string) => {
-  console.warn(message);
+// Отправка угадывания на сервер
+const sendGuess = async (direction: 'long' | 'short'): Promise<GuessResponse | null> => {
+  try {
+    const userId = getUserId();
+    const token = getToken();
+
+    const response = await fetch(`https://tradeguess-backend.onrender.com/api/game/guess?userId=5`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        segmentId: segmentId.value,
+        direction
+      })
+    });
+
+    const result: GuessResponse = await response.json();
+    return result;
+  } catch (error) {
+    console.error('❌ Ошибка отправки:', error);
+    return null;
+  }
 };
 
 const initChart = (data: Candle[], showResultLine = false) => {
-  console.log('🎨 initChart вызван с данными:', data.length, 'свечей');
+  if (!chartRef.value) return;
 
-  if (!chartRef.value) {
-    console.error('❌ chartRef не найден');
-    return;
-  }
-
-  if (chartInstance) {
-    chartInstance.dispose();
-  }
-
+  if (chartInstance) chartInstance.dispose();
   chartInstance = echarts.init(chartRef.value);
-  console.log('✅ ECharts инициализирован');
 
   const dates = data.map(c => c.date);
   const values = data.map(c => [c.open, c.close, c.low, c.high]);
-  const splitIndex = showResultLine ? data.length - 1 : -1;
-
-  console.log('📋 Даты:', dates.slice(-3));
-  console.log('💰 Значения:', values.slice(-3));
+  const splitIndex = showResultLine ? visibleCandlesCount.value - 1 : -1;
 
   const option: echarts.EChartsOption = {
     backgroundColor: '#131722',
@@ -314,31 +332,44 @@ const initChart = (data: Candle[], showResultLine = false) => {
   };
 
   chartInstance.setOption(option);
-  console.log('✅ График отрисован');
 };
 
+// ✅ ДОБАВЬТЕ ЭТО В TEMPLATE в секцию кнопок:
 const makeGuess = async (direction: 'long' | 'short') => {
   if (gameState.value !== 'playing') return;
 
-  console.log('🎯 Пользователь выбрал:', direction);
+  console.log('🎯 Отправляем на сервер:', direction, segmentId.value);
 
   gameState.value = 'result';
 
-  const lastVisible = allCandles.value[visibleCandlesCount.value - 1];
-  const lastHidden = allCandles.value[allCandles.value.length - 1];
+  const serverResponse = await sendGuess(direction);
 
-  console.log('📊 Последняя видимая:', lastVisible?.close);
-  console.log('📊 Последняя скрытая:', lastHidden?.close);
+  if (!serverResponse?.success) {
+    console.error('❌ Ошибка сервера');
+    gameState.value = 'playing';
+    safeShowAlert('Ошибка сервера');
+    return;
+  }
 
-  const isPriceUp = lastHidden.close >= lastVisible.close;
-  const isWin = (direction === 'long' && isPriceUp) || (direction === 'short' && !isPriceUp);
+  gameResult.value = serverResponse.data.isCorrect ? 'win' : 'lose';
+  serverMessage.value = serverResponse.data.message;
 
-  console.log('✅ Выигрыш:', isWin, 'Цена выросла:', isPriceUp);
+  const resultCandles: Candle[] = serverResponse.data.resultCandles.map((c: ServerCandle) => ({
+    date: new Date(c.t).toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }),
+    open: Number(c.o.toFixed(2)),
+    high: Number(c.h.toFixed(2)),
+    low: Number(c.l.toFixed(2)),
+    close: Number(c.c.toFixed(2)),
+    volume: Number(c.v.toFixed(2))
+  }));
 
-  gameResult.value = isWin ? 'win' : 'lose';
-
-  // Показываем все свечи с линией разделения
-  initChart(allCandles.value, true);
+  const fullData = [...allCandles.value.slice(0, visibleCandlesCount.value), ...resultCandles];
+  initChart(fullData, true);
 
   showResultModal.value = true;
   progress.value = 100;
@@ -352,17 +383,15 @@ const makeGuess = async (direction: 'long' | 'short') => {
     showResultModal.value = false;
     if (progressInterval) clearInterval(progressInterval);
 
-    // Обновляем счет
-    if (isWin) {
+    if (serverResponse.data.isCorrect) {
       score.value += 10;
       streak.value++;
     } else {
       streak.value = 0;
     }
 
-    // Загружаем новый раунд
     await loadNewRound();
-  }, 1500);
+  }, 2000);
 };
 
 const setGameMode = (mode: 'candle' | 'trend') => {
@@ -372,8 +401,6 @@ const setGameMode = (mode: 'candle' | 'trend') => {
 };
 
 onMounted(async () => {
-  console.log('🚀 Компонент смонтирован');
-  console.log('🔑 Токен в localStorage:', !!getToken());
   await loadNewRound();
 
   if (chartRef.value) {

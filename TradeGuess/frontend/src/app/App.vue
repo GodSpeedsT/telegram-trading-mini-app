@@ -18,8 +18,6 @@ watch(
 )
 
 const authenticateUser = async () => {
-  console.log('telegramWebApp:', telegramWebApp)
-
   const tg = telegramWebApp
 
   if (!tg || !tg.initDataUnsafe?.user) {
@@ -29,15 +27,7 @@ const authenticateUser = async () => {
 
   const user = tg.initDataUnsafe.user
 
-  console.log('Тело запроса:', {
-    telegramId: user.id,
-    username: user.username || '',
-    firstName: user.first_name || '',
-    initData: tg.initDataUnsafe
-  })
-
   try {
-    console.log('🚀 Отправляем запрос на бэкенд...')
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -77,7 +67,6 @@ onMounted(async () => {
     return
   }
   await authenticateUser()
-  console.log('⚡ authenticateUser вызван')
 })
 </script>
 

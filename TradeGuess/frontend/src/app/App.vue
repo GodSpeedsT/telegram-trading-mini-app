@@ -11,37 +11,71 @@ const authError = ref('')
 
 watch(
   () => route.path,
-  newPath => {
+  (newPath, oldPath) => {
+    console.log(`[ROUTE] Изменение пути: ${oldPath || 'N/A'} → ${newPath}`)
     showNavigation.value = newPath !== '/'
+    console.log(`[ROUTE] showNavigation обновлен: ${showNavigation.value}`)
   },
   { immediate: true }
 )
 
 const authenticateUser = async () => {
-  const tg = telegramWebApp
-
-  if (!tg || !tg.initDataUnsafe?.user) {
-    console.warn('Telegram WebApp недоступен')
-    return false
-  }
-
-  const user = tg.initDataUnsafe.user
+  console.log('[AUTH] Начало процесса авторизации')
 
   try {
+    const tg = telegramWebApp
+
+    if (!tg) {
+      console.error('[AUTH] Telegram WebApp недоступен')
+      authError.value = 'Telegram WebApp недоступен'
+      return false
+    }
+
+    if (!tg.initDataUnsafe?.user) {
+      console.warn('[AUTH] initDataUnsafe.user отсутствует')
+      authError.value = 'Данные пользователя недоступны'
+      return false
+    }
+
+    const user = tg.initDataUnsafe.user
+    console.log('[AUTH] Данные пользователя:', {
+      id: user.id,
+      username: user.username || 'N/A',
+      firstName: user.first_name || 'N/A'
+    })
+
+    console.log('[AUTH] Отправка запроса на сервер...')
+    const requestBody = {
+      telegramId: user.id,
+      username: user.username || '',
+      firstName: user.first_name || ''
+    }
+    console.log('[AUTH] Тело запроса:', requestBody)
+
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        initData: tg.initDataUnsafe,
-        telegramId: user.id,
-        username: user.username || '',
-        firstName: user.first_name || ''
-      })
+      body: JSON.stringify(requestBody)
     })
 
-    const data = await response.json()
+    console.log('[AUTH] Ответ сервера:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    })
 
-    if (response.ok && data.success && data.data?.token) {
+    // ✅ КРИТИЧНО: всегда проверяем response.ok ПЕРЕД .json()
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[AUTH] HTTP ошибка:', response.status, errorText)
+      throw new Error(`HTTP ${response.status}: ${errorText || 'Серверная ошибка'}`)
+    }
+
+    const data = await response.json()
+    console.log('[AUTH] Данные ответа:', data)
+
+    if (data.success && data.data?.token) {
+      console.log('[AUTH] Авторизация успешна')
       localStorage.setItem('token', data.data.token)
       isAuthenticated.value = true
       tg.showAlert('✅ Авторизация успешна!')
@@ -52,21 +86,39 @@ const authenticateUser = async () => {
 
       return true
     } else {
-      throw new Error(data.message || 'Ошибка сервера')
+      const errorMsg = data.message || 'Ошибка сервера'
+      console.error('[AUTH] Логическая ошибка:', errorMsg)
+      throw new Error(errorMsg)
     }
+
   } catch (error: any) {
-    console.error('Авторизация:', error)
-    authError.value = error.message
+    console.error('[AUTH] Критическая ошибка:', error)
+    authError.value = error.message || 'Неизвестная ошибка'
     telegramWebApp?.showAlert(`❌ ${error.message}`)
     return false
   }
 }
 
+// ✅ ИСПРАВЛЕННЫЙ onMounted с try-catch
 onMounted(async () => {
-  if (localStorage.getItem('token')) {
-    return
+  try {
+    console.log('[LIFECYCLE] onMounted выполнен')
+
+    const token = localStorage.getItem('token')
+    console.log('[STORAGE] Токен в localStorage:', !!token)
+
+    if (token) {
+      console.log('[STORAGE] Токен найден, авторизация пропущена')
+      return
+    }
+
+    console.log('[AUTH] Запуск авторизации')
+    await authenticateUser()
+
+  } catch (error: any) {
+    console.error('[LIFECYCLE] Ошибка в onMounted:', error)
+    authError.value = `Ошибка инициализации: ${error.message}`
   }
-  await authenticateUser()
 })
 </script>
 
@@ -90,7 +142,7 @@ onMounted(async () => {
       <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
         <span class="text-white font-bold text-lg">✕</span>
       </div>
-      <span class="font-bold text-white text-sm">Ошибка: {{ authError }}</span>
+      <span class="font-bold text-white text-sm">{{ authError }}</span>
     </div>
 
     <router-view />

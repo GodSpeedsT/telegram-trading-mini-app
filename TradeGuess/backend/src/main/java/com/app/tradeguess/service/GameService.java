@@ -38,12 +38,14 @@ public class GameService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public ChartResponse getTrainingChart(Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("Пользователь не найден.");
-        }
+    public ChartResponse getTrainingChart(Long telegramId) {
 
+        User user  = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(()-> new RuntimeException("Пользователь не найден"));
+
+        Long userId = user.getId();
         Integer attemptsToday = getDailyAttempts(userId);
+
         if (attemptsToday >= 10) {
             throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
         }
@@ -62,9 +64,11 @@ public class GameService {
     }
 
     @Transactional
-    public GuessResponse processGuess(Long userId, GuessRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + userId));
+    public GuessResponse processGuess(Long telegramId, GuessRequest request) {
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + telegramId));
+
+        Long userId = user.getId();
 
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
                 .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
@@ -74,7 +78,7 @@ public class GameService {
         saveAttempt(user, segment, request.getDirection(), isCorrect);
         incrementDailyAttempts(userId);
 
-        statsService.evictUserStatsCache(userId);
+        statsService.evictUserStatsCacheByTelegramId(telegramId);
 
         return GuessResponse.builder()
                 .isCorrect(isCorrect)
@@ -95,7 +99,7 @@ public class GameService {
         return false;
     }
 
-    @CacheEvict(value = "userStats", key = "#user.id")
+    @CacheEvict(value = "userStats", key = "#user.telegramId")
     public void saveAttempt(User user, ChartSegment segment,
                              TradeDirection direction, boolean isCorrect) {
         GuessAttempt attempt = new GuessAttempt();

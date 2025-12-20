@@ -2,7 +2,9 @@ package com.app.tradeguess.service;
 
 import com.app.tradeguess.model.dto.response.StatsResponse;
 import com.app.tradeguess.model.entity.GuessAttempt;
+import com.app.tradeguess.model.entity.User;
 import com.app.tradeguess.repository.GuessAttemptRepository;
+import com.app.tradeguess.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,10 +21,16 @@ import java.util.List;
 public class StatsService {
     private final GuessAttemptRepository guessAttemptRepository;
     private final RedisTemplate<String, String> redisTemplate;
+    private final UserRepository userRepository;
 
-    @Cacheable(value = "userStats", key = "#userId")
-    public StatsResponse getUserStats(Long userId) {
-        log.info("Calculating stats for user {}", userId);
+    @Cacheable(value = "userStats", key = "#telegramId")
+    public StatsResponse getUserStats(Long telegramId) {
+        log.info("Calculating stats for user {}", telegramId);
+
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Long userId = user.getId();
 
         Long totalAttempts = guessAttemptRepository.countByUserId(userId);
         Long correctAttempts = guessAttemptRepository.countByUserIdAndIsCorrect(userId, true);
@@ -44,10 +52,16 @@ public class StatsService {
                 .build();
     }
 
-    @CacheEvict(value = "userStats", key = "#userId")
-    public void evictUserStatsCache(Long userId) {
-        log.info("Evicting stats cache for user {}", userId);
+    @CacheEvict(value = "userStats", key = "#telegramId")
+    public void evictUserStatsCache(Long telegramId) {
+        log.info("Evicting stats cache for user {}", telegramId);
     }
+
+    @CacheEvict(value = "userStats", key = "#telegramId")
+    public void evictUserStatsCacheByTelegramId(Long telegramId) {
+        log.info("Evicting stats cache for user {}", telegramId);
+    }
+
 
     private Integer getDailyAttempts(Long userId) {
         String key = "user:" + userId + ":attempts:" + LocalDate.now();
@@ -89,8 +103,8 @@ public class StatsService {
         return currentStreak;
     }
 
-    @CacheEvict(value = "userStats", key = "#userId")
-    public void evictUserStats(Long userId) {
-        log.info("Evicting stats cache for user {}", userId);
+    @CacheEvict(value = "userStats", key = "#telegramId")
+    public void evictUserStats(Long telegramId) {
+        log.info("Evicting stats cache for user {}", telegramId);
     }
 }

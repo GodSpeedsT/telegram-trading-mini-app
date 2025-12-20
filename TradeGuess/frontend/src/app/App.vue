@@ -1,144 +1,151 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { telegramWebApp } from '@/app/main.ts'
 import { useRoute } from 'vue-router'
 import { NavigationMenu } from '@/widgets/NavigationMenu'
+
+let telegramWebApp: any = null
 
 const route = useRoute()
 const showNavigation = ref(false)
 const isAuthenticated = ref(false)
 const authError = ref('')
 
-watch(
-  () => route.path,
-  (newPath, oldPath) => {
-    console.log(`[ROUTE] Изменение пути: ${oldPath || 'N/A'} → ${newPath}`)
-    showNavigation.value = newPath !== '/'
-    console.log(`[ROUTE] showNavigation обновлен: ${showNavigation.value}`)
-  },
-  { immediate: true }
-)
+watch(() => route.path, (newPath) => {
+  showNavigation.value = newPath !== '/'
+}, { immediate: true })
 
-const authenticateUser = async () => {
-  console.log('[AUTH] Начало процесса авторизации')
-
+const safeShowAlert = (message: string) => {
   try {
-    const tg = telegramWebApp
-
-    if (!tg) {
-      console.error('[AUTH] Telegram WebApp недоступен')
-      authError.value = 'Telegram WebApp недоступен'
-      return false
+    if (telegramWebApp?.showPopup) {
+      telegramWebApp.showPopup({
+        message,
+        buttons: [{ text: 'OK', type: 'default' }]
+      })
+    } else if (telegramWebApp?.showAlert) {
+      telegramWebApp.showAlert(message)
+    } else {
+      alert(message)
     }
+  } catch (e) {
+    console.warn('[ALERT]', message)
+  }
+}
 
-    if (!tg.initDataUnsafe?.user) {
-      console.warn('[AUTH] initDataUnsafe.user отсутствует')
-      authError.value = 'Данные пользователя недоступны'
-      return false
+const collectUserData = () => {
+  try {
+    if (!telegramWebApp || !telegramWebApp.initDataUnsafe?.user) {
+      return {
+        telegramId: 999999,
+        username: 'testuser',
+        firstName: 'Test User',
+        isReal: false
+      }
     }
-
-    const user = tg.initDataUnsafe.user
-    console.log('[AUTH] Данные пользователя:', {
-      id: user.id,
-      username: user.username || 'N/A',
-      firstName: user.first_name || 'N/A'
-    })
-
-    console.log('[AUTH] Отправка запроса на сервер...')
-    const requestBody = {
+    const user = telegramWebApp.initDataUnsafe.user
+    return {
       telegramId: user.id,
       username: user.username || '',
-      firstName: user.first_name || ''
+      firstName: user.first_name || '',
+      isReal: true
     }
-    console.log('[AUTH] Тело запроса:', requestBody)
+  } catch (error) {
+    console.error('[AUTH] collectUserData error:', error)
+    return {
+      telegramId: 999999,
+      username: 'testuser',
+      firstName: 'Test User',
+      isReal: false
+    }
+  }
+}
+
+const authenticateUser = async () => {
+  try {
+    const userData = collectUserData()
+    console.log('[AUTH] Данные:', userData)
 
     const response = await fetch('https://tradeguess-backend.onrender.com/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify({
+        telegramId: userData.telegramId,
+        username: userData.username,
+        firstName: userData.firstName
+      })
     })
 
-    console.log('[AUTH] Ответ сервера:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
-    })
-
-    // ✅ КРИТИЧНО: всегда проверяем response.ok ПЕРЕД .json()
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[AUTH] HTTP ошибка:', response.status, errorText)
-      throw new Error(`HTTP ${response.status}: ${errorText || 'Серверная ошибка'}`)
+      throw new Error(`HTTP ${response.status}`)
     }
 
     const data = await response.json()
-    console.log('[AUTH] Данные ответа:', data)
 
     if (data.success && data.data?.token) {
-      console.log('[AUTH] Авторизация успешна')
       localStorage.setItem('token', data.data.token)
       isAuthenticated.value = true
-      tg.showAlert('✅ Авторизация успешна!')
 
       setTimeout(() => {
         isAuthenticated.value = false
       }, 5000)
-
       return true
     } else {
-      const errorMsg = data.message || 'Ошибка сервера'
-      console.error('[AUTH] Логическая ошибка:', errorMsg)
-      throw new Error(errorMsg)
+      throw new Error(data.message || 'Ошибка сервера')
     }
-
   } catch (error: any) {
-    console.error('[AUTH] Критическая ошибка:', error)
-    authError.value = error.message || 'Неизвестная ошибка'
-    telegramWebApp?.showAlert(`❌ ${error.message}`)
+    console.error('[AUTH] Ошибка:', error)
+    authError.value = error.message || 'Ошибка авторизации'
+    safeShowAlert(`❌ ${error.message}`)
     return false
   }
 }
 
-// ✅ ИСПРАВЛЕННЫЙ onMounted с try-catch
+const initWebApp = () => {
+  telegramWebApp = (window as any).Telegram?.WebApp || null
+
+  if (!telegramWebApp) {
+    console.warn('[TG] WebApp не найден')
+    return
+  }
+
+  const version = parseFloat(telegramWebApp.version || '0')
+
+  if (version < 6.0) {
+    try {
+      ;(telegramWebApp as any).setHeaderColor?.('#18181b')
+      ;(telegramWebApp as any).setBackgroundColor?.('#18181b')
+    } catch (e) {}
+  }
+
+  telegramWebApp.expand()
+}
+
 onMounted(async () => {
   try {
-    console.log('[LIFECYCLE] onMounted выполнен')
+    initWebApp()
 
-    const token = localStorage.getItem('token')
-    console.log('[STORAGE] Токен в localStorage:', !!token)
-
-    if (token) {
-      console.log('[STORAGE] Токен найден, авторизация пропущена')
+    if (localStorage.getItem('token')) {
       return
     }
 
-    console.log('[AUTH] Запуск авторизации')
     await authenticateUser()
 
   } catch (error: any) {
-    console.error('[LIFECYCLE] Ошибка в onMounted:', error)
-    authError.value = `Ошибка инициализации: ${error.message}`
+    console.error('[LIFECYCLE] onMounted error:', error)
+    authError.value = 'Ошибка запуска: ' + (error.message || 'Неизвестно')
   }
 })
 </script>
 
 <template>
   <div class="min-h-screen bg-zinc-900 text-zinc-300 font-sans antialiased relative">
-
-    <div
-      v-if="isAuthenticated"
-      class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-500/90 backdrop-blur-sm px-5 py-3 rounded-2xl border border-emerald-400 shadow-2xl flex items-center gap-3"
-    >
+    <div v-if="isAuthenticated" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-500/90 backdrop-blur-sm px-5 py-3 rounded-2xl border border-emerald-400 shadow-2xl flex items-center gap-3">
       <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
         <span class="text-white font-bold text-lg">✓</span>
       </div>
       <span class="font-bold text-white text-sm">Авторизация успешна</span>
     </div>
 
-    <div
-      v-if="authError"
-      class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 backdrop-blur-sm px-5 py-3 rounded-2xl border border-red-400 shadow-2xl flex items-center gap-3"
-    >
+    <div v-if="authError" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-500/90 backdrop-blur-sm px-5 py-3 rounded-2xl border border-red-400 shadow-2xl flex items-center gap-3">
       <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
         <span class="text-white font-bold text-lg">✕</span>
       </div>

@@ -2,21 +2,24 @@
   <div class="min-h-screen flex flex-col justify-center items-center p-4 relative bg-zinc-950 overflow-hidden">
     <div class="absolute inset-0 w-full h-full pointer-events-none"></div>
     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none"></div>
-    
+
     <div class="relative z-10 w-full flex flex-col items-center overflow-hidden bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] max-w-[340px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] 2xl:max-w-[800px] pt-6 sm:pt-8 md:pt-10 lg:pt-12 xl:pt-14 2xl:pt-16 pb-8 sm:pb-10 md:pb-12 lg:pb-14 xl:pb-16 2xl:pb-20 rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] 2xl:rounded-[60px]">
-      
+
       <!-- Декоративная полоса сверху -->
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent opacity-50 animate-pulse"></div>
-      
+
       <!-- Секция профиля -->
       <div class="flex flex-col items-center gap-3 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-7 pb-8 sm:pb-9 md:pb-10 lg:pb-12 xl:pb-14 2xl:pb-16">
         <!-- Аватарка -->
         <div class="relative group cursor-pointer">
           <div class="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 xl:w-44 xl:h-44 2xl:w-48 2xl:h-48 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-4 border-zinc-700 flex items-center justify-center overflow-hidden shadow-2xl transition-all duration-300 group-hover:border-zinc-500 group-hover:scale-105">
-            <!-- Если есть фото -->
-            <img v-if="user.avatar" :src="user.avatar" alt="Avatar" class="w-full h-full object-cover">
-            <!-- Если фото нет - иконка по умолчанию -->
-            <svg v-else class="h-2/3 w-2/3 text-zinc-400 opacity-80" viewBox="0 0 24 24" fill="currentColor">
+            <img
+              v-if="userAvatar"
+              :src="userAvatar"
+              :alt="userName"
+              class="w-full h-full object-cover rounded-full"
+            />
+            <svg v-else class="h-5/6 w-5/6 text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
               <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
             </svg>
           </div>
@@ -27,23 +30,24 @@
             </svg>
           </div>
         </div>
-        
+
         <!-- Имя аккаунта -->
         <div class="flex flex-col items-center gap-1">
-          <span class="text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-4xl font-bold text-white text-center">
-            {{ user.fullName }}
-          </span>
+          <!-- ✅ Имя пользователя вместо "Гость" -->
+          <span class="text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl 2xl:text-4xl font-bold text-white">
+          {{ userName || 'Гость' }}
+        </span>
           <!-- Username -->
           <div class="flex items-center gap-2 text-zinc-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
             </svg>
             <span class="text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-lg font-medium">
-              @{{ user.username }}
+              @{{ userAccountName || 'no_username' }}
             </span>
           </div>
         </div>
-        
+
         <!-- Дата последнего захода -->
         <div class="flex items-center gap-2 px-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-full">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-zinc-500" viewBox="0 0 20 20" fill="currentColor">
@@ -54,10 +58,10 @@
           </span>
         </div>
       </div>
-      
+
       <!-- Кнопки действий -->
       <div class="w-full flex flex-col gap-5 px-6 max-w-[340px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px] xl:max-w-[500px] 2xl:max-w-[550px]">
-        
+
         <!-- Статистика -->
         <button @click="viewStats" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px]">
           <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-emerald-400 bg-emerald-500/10 rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16">
@@ -70,7 +74,7 @@
             <span class="text-zinc-400 font-medium text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl">Результаты и прогресс</span>
           </div>
         </button>
-    
+
         <!-- Выход -->
         <button @click="logout" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px]">
           <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-rose-400 bg-rose-500/10 rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16">
@@ -83,7 +87,7 @@
             <span class="text-zinc-400 font-medium text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl">Завершить сеанс</span>
           </div>
         </button>
-        
+
         <!-- Назад -->
         <button @click="goBack" class="relative w-full bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-500/50 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[60px] sm:h-[64px] md:h-[68px] lg:h-[72px] xl:h-[76px] 2xl:h-[80px] mt-2">
           <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-zinc-400 bg-zinc-500/5 rounded-full w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-13 xl:h-13 2xl:w-14 2xl:h-14">
@@ -95,7 +99,7 @@
             <span class="text-zinc-300 font-bold leading-tight text-lg sm:text-lg md:text-xl lg:text-xl xl:text-2xl 2xl:text-2xl">Назад</span>
           </div>
         </button>
-        
+
       </div>
     </div>
   </div>
@@ -105,8 +109,12 @@
 import { ref, onMounted } from 'vue'
 import router from '@/app/router/index.js'
 import { useRouter } from 'vue-router'
+import {telegramWebApp} from '@/app/main.ts'
 
 const routerInstance = useRouter()
+const userAvatar = ref('')
+const userName = ref('Гость')
+const userAccountName = ref()
 
 // Данные пользователя
 const user = ref({
@@ -137,7 +145,21 @@ onMounted(() => {
   // Здесь можно загрузить реальные данные из API
   // Например:
   // user.value = await fetchUserData();
-  
+  const tg = telegramWebApp
+  if (tg?.initDataUnsafe?.user) {
+    const user = tg.initDataUnsafe.user
+    userName.value = user.first_name || 'Гость'
+    userAccountName.value = user.username || ''
+
+    // ✅ Генерируем аватар по имени (Telegram не дает photo_url)
+    if (user.photo_url) {
+      userAvatar.value = user.photo_url
+    } else if (user.first_name) {
+      // fallback, если вдруг аватарки нет
+      userAvatar.value =
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=2b6cb0&color=fff&size=128&bold=true&font-size=0.6`
+    }
+  }
   // Устанавливаем текущее время как время последнего захода
   user.value.lastLogin = new Date()
 })

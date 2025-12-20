@@ -44,14 +44,10 @@ public class GameService {
                 .orElseThrow(()-> new RuntimeException("Пользователь не найден"));
 
         Long userId = user.getId();
+        Integer attemptsToday = getDailyAttempts(userId);
 
-        boolean isAdmin = user.getRole().isAdmin();
-        if (!isAdmin) {
-            Integer attemptsToday = getDailyAttempts(userId);
-
-            if (attemptsToday >= 10) {
-                throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
-            }
+        if (attemptsToday >= 10) {
+            throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
         }
 
         ChartSegment segment = getRandomSegment();
@@ -60,13 +56,10 @@ public class GameService {
             throw new RuntimeException("Нет доступных графиков. Добавьте данные в chart_segments.");
         }
 
-        Integer attemptsLeft = isAdmin ? 999 : (10 - getDailyAttempts(userId));
-
         return ChartResponse.builder()
                 .segmentId(segment.getId())
                 .candles(parseCandles(segment.getDisplayCandles(), ChartResponse.Candle.class))
-                .attemptsLeft(Math.max(0, attemptsLeft))
-                .isAdmin(isAdmin)
+                .attemptsLeft(10 - attemptsToday)
                 .build();
     }
 
@@ -76,14 +69,6 @@ public class GameService {
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + telegramId));
 
         Long userId = user.getId();
-        boolean isAdmin = user.getRole().isAdmin();
-
-        if (!isAdmin) {
-            Integer attemptsToday = getDailyAttempts(userId);
-            if (attemptsToday >= 10) {
-                throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
-            }
-        }
 
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
                 .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
@@ -91,10 +76,8 @@ public class GameService {
         boolean isCorrect = checkIfCorrect(segment, request.getDirection());
 
         saveAttempt(user, segment, request.getDirection(), isCorrect);
+        incrementDailyAttempts(userId);
 
-        if (!isAdmin) {
-            incrementDailyAttempts(userId);
-        }
         statsService.evictUserStatsCacheByTelegramId(telegramId);
 
         return GuessResponse.builder()
@@ -102,7 +85,6 @@ public class GameService {
                 .message(isCorrect ? "Правильно!" : "Неправильно!")
                 .resultCandles(parseCandles(segment.getResultCandles(), GuessResponse.Candle.class))
                 .priceChangePercent(calculatePriceChangePercent(segment))
-                .isAdmin(isAdmin)
                 .build();
     }
 

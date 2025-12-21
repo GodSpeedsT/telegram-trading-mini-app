@@ -19,19 +19,25 @@ public class GameController {
     }
 
     @GetMapping("/chart")
-    public ResponseEntity<ApiResponse<ChartResponse>> getChart(@RequestParam Long userId) {
-        ChartResponse chart = gameService.getTrainingChart(userId);
+    public ResponseEntity<ApiResponse<ChartResponse>> getChart(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "default") String mode
+    ) {
+        ChartResponse chart = gameService.getTrainingChart(userId,mode);
         return ResponseEntity.ok(ApiResponse.success(chart));
     }
 
     @PostMapping("/guess")
     public ResponseEntity<ApiResponse<GuessResponse>> guess(
             @RequestParam Long userId,
+            @RequestParam(defaultValue = "default") String mode,
             @RequestBody GuessRequest request) {
 
-        GuessResponse response = gameService.processGuess(userId, request);
+        GuessResponse response = gameService.processGuess(userId,request,mode);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+
 
     @GetMapping("/test")
     public ResponseEntity<String> test() {

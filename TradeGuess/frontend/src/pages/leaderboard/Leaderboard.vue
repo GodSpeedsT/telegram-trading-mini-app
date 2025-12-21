@@ -242,39 +242,4 @@ onMounted(() => {
   scrollbar-width: none;
 }
 
-/* Улучшения для тач-устройств */
-@media (hover: none) and (pointer: coarse) {
-  button {
-    min-height: 44px; /* Минимальная высота для удобного нажатия */
-  }
-  
-  .flex-1 {
-    /* Оптимизация для iOS */
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Адаптивные шрифты */
-@media (max-width: 320px) {
-  .text-xs {
-    font-size: 0.7rem;
-  }
-  .text-sm {
-    font-size: 0.8rem;
-  }
-}
-
-/* Оптимизация для очень высоких экранов */
-@media (min-height: 900px) {
-  .max-h-\[calc\(100dvh-140px\)\] {
-    max-height: calc(100dvh - 180px);
-  }
-}
-
-/* Анимация при наведении для десктопа */
-@media (hover: hover) {
-  .bg-zinc-800\/50:hover {
-    background-color: rgba(39, 39, 42, 0.7);
-  }
-}
 </style>

@@ -20,13 +20,13 @@
     <!-- Header -->
     <div class="pt-5 pb-2 px-4 z-20 shrink-0 flex flex-col gap-3 bg-zinc-950">
       <div class="flex justify-between items-center">
-        <div v-if="currentAsset" class="flex items-center gap-3">
+        <div class="flex items-center gap-3">
           <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-zinc-800 flex items-center justify-center border-2 border-zinc-700 shadow-xl">
-            <span class="text-base sm:text-lg md:text-xl font-black text-zinc-300">{{ currentAsset.symbol[0] }}</span>
+            <span class="text-base sm:text-lg md:text-xl font-black text-zinc-300">B</span>
           </div>
           <div class="flex flex-col gap-0.5">
-            <h1 class="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white leading-none">{{ currentAsset.name }}</h1>
-            <span class="text-[10px] sm:text-xs font-bold text-zinc-400 bg-zinc-900/80 px-2 py-0.5 rounded-lg border border-zinc-800 w-fit">{{ currentAsset.symbol }}</span>
+            <h1 class="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white leading-none">BTC/USDT</h1>
+            <span class="text-[10px] sm:text-xs font-bold text-zinc-400 bg-zinc-900/80 px-2 py-0.5 rounded-lg border border-zinc-800 w-fit">BTC</span>
           </div>
         </div>
         <div class="flex flex-col items-end gap-1">
@@ -78,7 +78,6 @@
 
     <!-- Chart Container -->
     <div class="flex-1 w-full z-10 relative mt-2 flex flex-col min-h-0 bg-[#131722] border-y border-zinc-800">
-
       <!-- ✅ МОДАЛКА ЛИМИТА -->
       <transition name="fade">
         <div v-if="gameState === 'limitReached'"
@@ -128,13 +127,6 @@
         <div class="w-8 h-8 border-4 border-zinc-600 border-t-yellow-400 rounded-full animate-spin"></div>
       </div>
     </div>
-
-    <!-- Bottom Navigation -->
-    <div class="fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-xl border-t border-white/5 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-      <div class="flex justify-around items-center h-[70px] sm:h-[80px] md:h-[90px] px-2">
-        <!-- nav buttons -->
-      </div>
-    </div>
   </div>
 </template>
 
@@ -166,7 +158,6 @@ const showResultModal = ref(false);
 const segmentId = ref(0);
 const serverMessage = ref('');
 
-// ✅ COMPUTED для реактивного score/streak из STORES
 const score = computed(() => gameStore.score);
 const streak = computed(() => gameStore.streak);
 const notifications = ref<any[]>([]);
@@ -198,7 +189,32 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   return data;
 };
 
-// ✅ ФИКС loadNewRound - 1 свеча + данные
+// ✅ ГЕНЕРАТОР ЛОГИЧНОЙ РАНДОМНОЙ СВЕЧИ
+const generateRandomCandle = (prevCandle: Candle): Candle => {
+  const basePrice = prevCandle.close;
+  const volatility = 0.008; // 0.8% волатильность
+  const directionChance = Math.random();
+
+  const changePercent = (Math.random() * volatility * 2 - volatility) * (directionChance > 0.5 ? 1.5 : -1);
+  const newClose = basePrice * (1 + changePercent);
+
+  const range = Math.abs(basePrice * 0.004);
+  const high = Math.max(basePrice, newClose) + Math.random() * range;
+  const low = Math.min(basePrice, newClose) - Math.random() * range;
+  const open = prevCandle.close;
+
+  return {
+    date: new Date(Date.parse(prevCandle.date) + 5 * 60 * 1000).toLocaleString('ru-RU', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+    }),
+    open: parseFloat(open.toFixed(2)),
+    high: parseFloat(high.toFixed(2)),
+    low: parseFloat(low.toFixed(2)),
+    close: parseFloat(newClose.toFixed(2)),
+    volume: Math.random() * 1500 + 300
+  };
+};
+
 const loadNewRound = async (isRetry = false) => {
   console.log('🔄 loadNewRound:', gameMode.value);
 
@@ -210,7 +226,6 @@ const loadNewRound = async (isRetry = false) => {
 
   try {
     const userId = authStore.getUserId();
-    // ✅ БЕЗ &mode= - обычный запрос!
     const result: ChartResponse = await apiRequest(
       `https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}`
     );
@@ -227,8 +242,7 @@ const loadNewRound = async (isRetry = false) => {
       throw new Error('Нет данных свечей');
     }
 
-    // ✅ ПАРСИНГ timestamp (миллисекунды!)
-    allCandles.value = result.data.candles.map((c: ServerCandle) => ({
+    const serverCandles: Candle[] = result.data.candles.map((c: ServerCandle) => ({
       date: new Date(c.t).toLocaleString('ru-RU', {
         day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
       }),
@@ -239,31 +253,40 @@ const loadNewRound = async (isRetry = false) => {
       volume: parseFloat(c.v.toString())
     }));
 
-    // 🔥 КЛЮЧЕВАЯ ЛОГИКА: сколько скрывать по режиму
-    let hiddenCount: number;
-    if (gameMode.value === 'candle') {
-      // 1 СВЕЧА = показываем ВСЕ КРОМЕ ПОСЛЕДНЕЙ
-      hiddenCount = 1;
-    } else {
-      // ТРЕНД = скрываем ПОСЛЕДНИЕ 15 (или меньше если данных мало)
-      hiddenCount = Math.min(15, allCandles.value.length - 10);
-    }
-
-    visibleCandlesCount.value = allCandles.value.length - hiddenCount;
     segmentId.value = result.data.segmentId;
 
-    console.log('🎯 ЛОГИКА СВЕЧЕЙ:', {
-      total: allCandles.value.length,
-      mode: gameMode.value,
-      hidden: hiddenCount,
-      visible: visibleCandlesCount.value,
-      lastVisibleIndex: visibleCandlesCount.value - 1
-    });
+    if (gameMode.value === 'candle') {
+      // 🔥 1 СВЕЧА: первые N-1 + РАНДОМНАЯ последняя
+      const visibleCount = Math.min(25, serverCandles.length - 1);
+      allCandles.value = [...serverCandles.slice(0, visibleCount)];
+
+      const randomCandle = generateRandomCandle(serverCandles[visibleCount - 1]);
+      allCandles.value.push(randomCandle);
+
+      visibleCandlesCount.value = allCandles.value.length - 1;
+
+      console.log('🎲 1 СВЕЧА РАНДОМ:', {
+        visible: visibleCandlesCount.value,
+        prevClose: serverCandles[visibleCount - 1].close,
+        randomClose: randomCandle.close,
+        direction: randomCandle.close > serverCandles[visibleCount - 1].close ? 'ВВЕРХ' : 'ВНИЗ'
+      });
+
+    } else {
+      // ТРЕНД: скрываем последние 15
+      const hiddenCount = Math.min(15, serverCandles.length - 10);
+      allCandles.value = serverCandles;
+      visibleCandlesCount.value = allCandles.value.length - hiddenCount;
+
+      console.log('📈 ТРЕНД:', {
+        total: allCandles.value.length,
+        hidden: hiddenCount,
+        visible: visibleCandlesCount.value
+      });
+    }
 
     gameState.value = 'playing';
     await nextTick();
-
-    // Показываем только видимые свечи
     initChartSmooth(allCandles.value.slice(0, visibleCandlesCount.value));
 
   } catch (error: any) {
@@ -276,7 +299,6 @@ const loadNewRound = async (isRetry = false) => {
   }
 };
 
-// ✅ ПЛАВНЫЙ init графика БЕЗ дерганости
 const initChartSmooth = (data: Candle[]) => {
   if (!chartRef.value || !data.length) return;
 
@@ -288,18 +310,16 @@ const initChartSmooth = (data: Candle[]) => {
   updateChartData(data, false);
 };
 
-// ✅ СУПЕР-ПЛАВНЫЙ update графика
 const updateChartData = (data: Candle[], showResultLine = false) => {
   if (!chartInstance || !data.length) return;
 
   const dates = data.map(c => c.date);
   const values = data.map(c => [c.open, c.close, c.low, c.high]);
-
   const splitIndex = showResultLine ? visibleCandlesCount.value - 1 : -1;
 
   const option: echarts.EChartsOption = {
     animation: true,
-    animationDuration: 300,
+    animationDuration: 400,
     animationEasing: 'cubicOut',
     backgroundColor: '#131722',
     grid: { left: 10, right: 5, top: 40, bottom: 60, containLabel: false },
@@ -339,74 +359,84 @@ const updateChartData = (data: Candle[], showResultLine = false) => {
     }]
   };
 
-  chartInstance.setOption(option, {
-    notMerge: false,
-    lazyUpdate: true,
-    animation: true
-  });
+  chartInstance.setOption(option, { notMerge: false, lazyUpdate: true, animation: true });
 };
 
-// ✅ ФИКС makeGuess - правильная обработка ответа
 const makeGuess = async (direction: 'long' | 'short') => {
   if (gameState.value !== 'playing') return;
 
-  console.log('🎯 Угадываем:', direction, 'видимых свечей:', visibleCandlesCount.value);
+  console.log('🎯 Угадываем:', direction, gameMode.value);
 
   gameState.value = 'animating';
 
-  try {
-    const userId = authStore.getUserId();
-    const result: GuessResponse = await apiRequest(
-      `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          segmentId: segmentId.value,
-          direction // ✅ Только direction!
-        })
+  if (gameMode.value === 'candle') {
+    // 🔥 1 СВЕЧА: КЛИЕНТСКАЯ ЛОГИКА
+    await nextTick();
+
+    const resultCandles = [allCandles.value[visibleCandlesCount.value]];
+    const prevCandle = allCandles.value[visibleCandlesCount.value - 1];
+    const isCorrect = resultCandles[0].close > prevCandle.close
+      ? direction === 'long'
+      : direction === 'short';
+
+    console.log('🎲 1 СВЕЧА результат:', {
+      isCorrect,
+      prevClose: prevCandle.close,
+      finalClose: resultCandles[0].close
+    });
+
+    gameResult.value = isCorrect ? 'win' : 'lose';
+    animateResultCandles(resultCandles, isCorrect);
+
+  } else {
+    // ТРЕНД: СЕРВЕРНАЯ ЛОГИКА
+    try {
+      const userId = authStore.getUserId();
+      const result: GuessResponse = await apiRequest(
+        `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ segmentId: segmentId.value, direction })
+        }
+      );
+
+      console.log('🎯 ТРЕНД сервер:', result);
+
+      if (!result.success) {
+        gameState.value = 'playing';
+        authStore.safeShowAlert(result.message || 'Ошибка сервера');
+        return;
       }
-    );
 
-    console.log('🎯 Ответ сервера:', result);
+      gameResult.value = result.data.isCorrect ? 'win' : 'lose';
 
-    if (!result.success) {
+      const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
+        date: new Date(c.t).toLocaleString('ru-RU', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        }),
+        open: parseFloat(c.o.toString()),
+        high: parseFloat(c.h.toString()),
+        low: parseFloat(c.l.toString()),
+        close: parseFloat(c.c.toString()),
+        volume: parseFloat(c.v.toString())
+      }));
+
+      animateResultCandles(resultCandles, result.data.isCorrect);
+
+    } catch (error: any) {
+      console.error('❌ makeGuess:', error);
       gameState.value = 'playing';
-      authStore.safeShowAlert(result.message || 'Ошибка сервера');
-      return;
+      authStore.safeShowAlert('Ошибка сети');
     }
-
-    gameResult.value = result.data.isCorrect ? 'win' : 'lose';
-
-    // ✅ resultCandles = ТОЛЬКО скрытые свечи для анимации
-    const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
-      date: new Date(c.t).toLocaleString('ru-RU', {
-        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-      }),
-      open: parseFloat(c.o.toString()),
-      high: parseFloat(c.h.toString()),
-      low: parseFloat(c.l.toString()),
-      close: parseFloat(c.c.toString()),
-      volume: parseFloat(c.v.toString())
-    }));
-
-    console.log('📈 Анимируем свечи:', resultCandles.length, 'isCorrect:', result.data.isCorrect);
-
-    animateResultCandles(resultCandles, result.data.isCorrect);
-
-  } catch (error: any) {
-    console.error('❌ makeGuess:', error);
-    gameState.value = 'playing';
   }
 };
 
-// ✅ СУПЕР-ПЛАВНАЯ анимация свечей
 const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
   let currentIndex = 0;
-  const stepDuration = 200; // Медленнее для 1 свечи
+  const stepDuration = gameMode.value === 'candle' ? 800 : 200;
 
   const animateStep = () => {
     if (currentIndex < resultCandles.length) {
-      // ✅ Берем ВСЕ предыдущие + текущую анимируемую
       const visibleData = allCandles.value.slice(0, visibleCandlesCount.value);
       const animatedData = [...visibleData, ...resultCandles.slice(0, currentIndex + 1)];
 
@@ -415,18 +445,17 @@ const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
 
       animationTimer = setTimeout(animateStep, stepDuration);
     } else {
-      // ✅ КОНЕЦ АНИМАЦИИ
       gameState.value = 'result';
       showResultModal.value = true;
 
       if (isCorrect) {
         gameStore.addScore(10);
-        if (gameStore.streak < 50) gameStore.incrementStreak(); // Защита от переполнения
+        if (gameStore.streak < 50) gameStore.incrementStreak();
       } else {
         gameStore.resetStreak();
       }
 
-      console.log('⭐ Финальный счет:', gameStore.score, 'streak:', gameStore.streak);
+      console.log('⭐ Итог:', { score: gameStore.score, streak: gameStore.streak });
 
       resultTimer = setTimeout(() => {
         showResultModal.value = false;
@@ -445,9 +474,8 @@ const setGameMode = (mode: 'candle' | 'trend') => {
 };
 
 onMounted(async () => {
-  // ✅ Загружаем актуальные данные из stores/LocalStorage
   gameStore.loadGameData();
-  console.log('⭐ Загружены данные игры:', { score: gameStore.score, streak: gameStore.streak });
+  console.log('⭐ Загружены данные:', { score: gameStore.score, streak: gameStore.streak });
 
   await loadNewRound();
 
@@ -487,5 +515,9 @@ onUnmounted(() => {
 @keyframes slideDown {
   0% { opacity: 0; transform: translateY(-20px) scale(0.95); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.notification-move {
+  transition: transform 0.3s ease;
 }
 </style>

@@ -26,7 +26,8 @@ public class AdminService {
     private final UserRepository userRepository;
     private final GuessAttemptRepository guessAttemptRepository;
     private final RedisTemplate<String,String> redisTemplate;
-    private final StatsService statsService;
+    private final UserService userService;
+    private final AttemptService attemptService;
 
     public List<AdminUserResponse> getAllUsers() {
         return userRepository.findAll().stream()
@@ -112,14 +113,11 @@ public class AdminService {
         return convertToAdminResponse(savedUser);
     }
 
-
-    // Поиск пользователей
     public List<AdminUserResponse> searchUsers(String query) {
         if (query == null || query.trim().isEmpty()) {
             return getAllUsers();
         }
 
-        // Очищаем запрос от @
         String cleanQuery = query.startsWith("@") ? query.substring(1) : query;
 
         return userRepository
@@ -129,7 +127,6 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    // Получить пользователя по ID
     public AdminUserResponse getUserById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
@@ -137,7 +134,6 @@ public class AdminService {
         return convertToAdminResponse(user);
     }
 
-    // Получить статистику по пользователю
     public UserStatsResponse getUserStats(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
@@ -163,22 +159,21 @@ public class AdminService {
                 .build();
     }
 
-    // Сбросить дневные попытки пользователя
     @Transactional
     public void resetUserDailyAttempts(Long userId, Long adminId) {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Администратор не найден"));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        if (!admin.getRole().isAdmin()) {
+            throw new RuntimeException("Толкьо админ может откатить попытки");
+        }
 
+        attemptService.resetDailyAttempts(userId);
 
-
-        log.info("Дневные попытки пользователя {} (@{}) сброшены администратором {}",
-                user.getFirstName(), user.getUsername(), admin.getUsername());
+        log.info("Дневные попытки пользователя {} сброшены администратором {}",
+                userId, admin.getUsername());
     }
 
-    // Конвертация User → AdminUserResponse
     private AdminUserResponse convertToAdminResponse(User user) {
         // Получаем статистику
         Long totalAttempts = guessAttemptRepository.countByUserId(user.getId());

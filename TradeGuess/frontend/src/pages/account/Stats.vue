@@ -1,11 +1,19 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center p-4 relative bg-zinc-950 overflow-hidden">
-    <!-- Декоративный фон -->
-    <div class="absolute inset-0 w-full h-full pointer-events-none">
-      <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl"></div>
+  <div class="min-h-screen flex flex-col items-center p-4 relative bg-[#09090b] overflow-hidden">
+    <!-- Фоновый рисунок с пазлами -->
+    <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="puzzlePattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+            <path id="p" d="M-2 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M-2 100 v35 a15 15 0 0 0 0 30 v37 M98 0 v35 a15 15 0 0 0 0 30 v70 a15 15 0 0 1 0 30 v37 M198 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M0 -2 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37 M0 98 h35 a15 15 0 0 0 30 0 h70 a15 15 0 0 1 30 0 h37 M0 198 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37"
+                  fill="none" stroke="white" stroke-width="1.5" opacity="0.08" />
+            <use href="#p" stroke="black" stroke-width="4" opacity="0.6" transform="translate(1,1)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#puzzlePattern)" />
+      </svg>
     </div>
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none z-1"></div>
 
     <!-- Основной контейнер с учетом навигации -->
     <div class="relative z-10 w-full flex flex-col items-center overflow-y-auto pb-[calc(70px+env(safe-area-inset-bottom)+1rem)] bg-zinc-900/90 border border-zinc-800/50 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-sm max-w-[340px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] 2xl:max-w-[800px] mt-4 rounded-[30px] sm:rounded-[40px] lg:rounded-[50px]">

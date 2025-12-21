@@ -45,7 +45,7 @@
       <!-- ✅ ИГРОВАЯ МОДАЛКА (результат) -->
       <transition name="slide-down">
         <div v-if="showResultModal && gameState === 'result'"
-             class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm p-8">
+             class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 p-8">
           <div class="flex flex-col items-center text-center max-w-md w-full px-4"
                :class="gameResult === 'win' ? 'text-green-400' : 'text-rose-400'">
             <div class="text-6xl mb-4 drop-shadow-2xl">{{ gameResult === 'win' ? '🎉' : '💀' }}</div>
@@ -121,7 +121,6 @@
           </svg>
           <span class="text-[10px] sm:text-xs font-medium text-zinc-500 hover:text-zinc-300 block mt-1">Главная</span>
         </button>
-        <!-- остальные кнопки -->
       </div>
     </div>
   </div>

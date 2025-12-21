@@ -60,21 +60,33 @@
     <!-- ✅ ФИКСИРОВАННАЯ МОДАЛКА РЕЗУЛЬТАТА -->
     <transition name="slide-down">
       <div v-if="showResultModal && gameState === 'result'"
-           class="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900/95 backdrop-blur-md shadow-2xl rounded-3xl px-8 py-5 flex items-center gap-4 border-4 max-w-[90vw] sm:max-w-md w-full mx-4"
-           :class="gameResult === 'win' ? 'border-green-500/70 bg-gradient-to-r from-green-500/10 to-green-600/10' : 'border-rose-500/70 bg-gradient-to-r from-rose-500/10 to-rose-600/10'">
-        <div class="flex-shrink-0 text-4xl sm:text-5xl drop-shadow-lg">
-          {{ gameResult === 'win' ? '🎉' : '💀' }}
-        </div>
-        <div class="flex flex-col items-center min-w-0 flex-1">
-          <div class="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-widest text-white mb-1 truncate">
+           class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-[90vw] max-w-md bg-zinc-900/95 backdrop-blur-xl shadow-2xl rounded-3xl p-8 flex flex-col items-center border-4 mx-4"
+           :class="gameResult === 'win'
+         ? 'border-green-500/80 bg-gradient-to-b from-green-500/20 to-green-900/90 shadow-green-500/30'
+         : 'border-rose-500/80 bg-gradient-to-b from-rose-500/20 to-rose-900/90 shadow-rose-500/30'">
+
+        <!-- Эмодзи БОЛЬШОЙ -->
+        <div class="text-7xl mb-6 drop-shadow-2xl animate-bounce">{{ gameResult === 'win' ? '🎉' : '💀' }}</div>
+
+        <!-- Текст -->
+        <div class="text-center mb-8">
+          <div class="text-3xl font-black uppercase tracking-widest mb-4 text-white">
             {{ gameResult === 'win' ? 'ВЕРНО!' : 'МИМО!' }}
           </div>
-          <div class="text-xs sm:text-sm font-bold px-4 py-1.5 rounded-2xl bg-white/20 text-white w-fit border border-white/30">
+          <div class="text-lg font-bold px-6 py-3 rounded-2xl bg-white/20 text-white border border-white/40">
             {{ gameResult === 'win' ? '+10 очков' : 'Серия сброшена' }}
           </div>
         </div>
+
+        <!-- Очки -->
+        <div class="flex items-center gap-4 text-2xl font-black text-yellow-400 mb-6">
+          <span>⭐ {{ score }}</span>
+          <span v-if="streak > 1" class="text-orange-400">🔥 x{{ streak }}</span>
+        </div>
+
       </div>
     </transition>
+
 
     <!-- Chart Container -->
     <div class="flex-1 w-full z-10 relative mt-2 flex flex-col min-h-0 bg-[#131722] border-y border-zinc-800">
@@ -189,32 +201,6 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   return data;
 };
 
-// ✅ ГЕНЕРАТОР ЛОГИЧНОЙ РАНДОМНОЙ СВЕЧИ
-const generateRandomCandle = (prevCandle: Candle): Candle => {
-  const basePrice = prevCandle.close;
-  const volatility = 0.008; // 0.8% волатильность
-  const directionChance = Math.random();
-
-  const changePercent = (Math.random() * volatility * 2 - volatility) * (directionChance > 0.5 ? 1.5 : -1);
-  const newClose = basePrice * (1 + changePercent);
-
-  const range = Math.abs(basePrice * 0.004);
-  const high = Math.max(basePrice, newClose) + Math.random() * range;
-  const low = Math.min(basePrice, newClose) - Math.random() * range;
-  const open = prevCandle.close;
-
-  return {
-    date: new Date(Date.parse(prevCandle.date) + 5 * 60 * 1000).toLocaleString('ru-RU', {
-      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-    }),
-    open: parseFloat(open.toFixed(2)),
-    high: parseFloat(high.toFixed(2)),
-    low: parseFloat(low.toFixed(2)),
-    close: parseFloat(newClose.toFixed(2)),
-    volume: Math.random() * 1500 + 300
-  };
-};
-
 const loadNewRound = async (isRetry = false) => {
   console.log('🔄 loadNewRound:', gameMode.value);
 
@@ -226,8 +212,10 @@ const loadNewRound = async (isRetry = false) => {
 
   try {
     const userId = authStore.getUserId();
+    // ✅ НОВЫЙ ПАРАМЕТР mode=single/default
+    const modeParam = gameMode.value === 'candle' ? 'single' : 'default';
     const result: ChartResponse = await apiRequest(
-      `https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}`
+      `https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}&mode=${modeParam}`
     );
 
     console.log('📊 Сервер ответил:', result);
@@ -242,7 +230,8 @@ const loadNewRound = async (isRetry = false) => {
       throw new Error('Нет данных свечей');
     }
 
-    const serverCandles: Candle[] = result.data.candles.map((c: ServerCandle) => ({
+    // ✅ Парсим свечи
+    allCandles.value = result.data.candles.map((c: ServerCandle) => ({
       date: new Date(c.t).toLocaleString('ru-RU', {
         day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
       }),
@@ -255,35 +244,16 @@ const loadNewRound = async (isRetry = false) => {
 
     segmentId.value = result.data.segmentId;
 
-    if (gameMode.value === 'candle') {
-      // 🔥 1 СВЕЧА: первые N-1 + РАНДОМНАЯ последняя
-      const visibleCount = Math.min(25, serverCandles.length - 1);
-      allCandles.value = [...serverCandles.slice(0, visibleCount)];
+    // ✅ single = скрываем 1 свечу, default = скрываем много
+    const hiddenCount = gameMode.value === 'candle' ? 1 : Math.min(15, allCandles.value.length - 10);
+    visibleCandlesCount.value = allCandles.value.length - hiddenCount;
 
-      const randomCandle = generateRandomCandle(serverCandles[visibleCount - 1]);
-      allCandles.value.push(randomCandle);
-
-      visibleCandlesCount.value = allCandles.value.length - 1;
-
-      console.log('🎲 1 СВЕЧА РАНДОМ:', {
-        visible: visibleCandlesCount.value,
-        prevClose: serverCandles[visibleCount - 1].close,
-        randomClose: randomCandle.close,
-        direction: randomCandle.close > serverCandles[visibleCount - 1].close ? 'ВВЕРХ' : 'ВНИЗ'
-      });
-
-    } else {
-      // ТРЕНД: скрываем последние 15
-      const hiddenCount = Math.min(15, serverCandles.length - 10);
-      allCandles.value = serverCandles;
-      visibleCandlesCount.value = allCandles.value.length - hiddenCount;
-
-      console.log('📈 ТРЕНД:', {
-        total: allCandles.value.length,
-        hidden: hiddenCount,
-        visible: visibleCandlesCount.value
-      });
-    }
+    console.log('🎯 ЛОГИКА СВЕЧЕЙ:', {
+      mode: gameMode.value,
+      total: allCandles.value.length,
+      hidden: hiddenCount,
+      visible: visibleCandlesCount.value
+    });
 
     gameState.value = 'playing';
     await nextTick();
@@ -359,75 +329,58 @@ const updateChartData = (data: Candle[], showResultLine = false) => {
     }]
   };
 
-  chartInstance.setOption(option, { notMerge: false, lazyUpdate: true, animation: true });
+  chartInstance.setOption(option, { notMerge: false, lazyUpdate: true });
 };
 
 const makeGuess = async (direction: 'long' | 'short') => {
   if (gameState.value !== 'playing') return;
 
   console.log('🎯 Угадываем:', direction, gameMode.value);
-
   gameState.value = 'animating';
 
-  if (gameMode.value === 'candle') {
-    // 🔥 1 СВЕЧА: КЛИЕНТСКАЯ ЛОГИКА
-    await nextTick();
-
-    const resultCandles = [allCandles.value[visibleCandlesCount.value]];
-    const prevCandle = allCandles.value[visibleCandlesCount.value - 1];
-    const isCorrect = resultCandles[0].close > prevCandle.close
-      ? direction === 'long'
-      : direction === 'short';
-
-    console.log('🎲 1 СВЕЧА результат:', {
-      isCorrect,
-      prevClose: prevCandle.close,
-      finalClose: resultCandles[0].close
-    });
-
-    gameResult.value = isCorrect ? 'win' : 'lose';
-    animateResultCandles(resultCandles, isCorrect);
-
-  } else {
-    // ТРЕНД: СЕРВЕРНАЯ ЛОГИКА
-    try {
-      const userId = authStore.getUserId();
-      const result: GuessResponse = await apiRequest(
-        `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ segmentId: segmentId.value, direction })
-        }
-      );
-
-      console.log('🎯 ТРЕНД сервер:', result);
-
-      if (!result.success) {
-        gameState.value = 'playing';
-        authStore.safeShowAlert(result.message || 'Ошибка сервера');
-        return;
+  try {
+    const userId = authStore.getUserId();
+    // ✅ НОВЫЙ ПАРАМЕТР mode=single/default
+    const modeParam = gameMode.value === 'candle' ? 'single' : 'default';
+    const result: GuessResponse = await apiRequest(
+      `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}&mode=${modeParam}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          segmentId: segmentId.value,
+          direction
+        })
       }
+    );
 
-      gameResult.value = result.data.isCorrect ? 'win' : 'lose';
+    console.log('🎯 Сервер ответ:', result);
 
-      const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
-        date: new Date(c.t).toLocaleString('ru-RU', {
-          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-        }),
-        open: parseFloat(c.o.toString()),
-        high: parseFloat(c.h.toString()),
-        low: parseFloat(c.l.toString()),
-        close: parseFloat(c.c.toString()),
-        volume: parseFloat(c.v.toString())
-      }));
-
-      animateResultCandles(resultCandles, result.data.isCorrect);
-
-    } catch (error: any) {
-      console.error('❌ makeGuess:', error);
+    if (!result.success) {
       gameState.value = 'playing';
-      authStore.safeShowAlert('Ошибка сети');
+      authStore.safeShowAlert(result.data?.message || result.data.message || 'Ошибка сервера');
+      return;
     }
+
+    gameResult.value = result.data.isCorrect ? 'win' : 'lose';
+
+    const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
+      date: new Date(c.t).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      }),
+      open: parseFloat(c.o.toString()),
+      high: parseFloat(c.h.toString()),
+      low: parseFloat(c.l.toString()),
+      close: parseFloat(c.c.toString()),
+      volume: parseFloat(c.v.toString())
+    }));
+
+    console.log('📈 Анимируем:', resultCandles.length, 'свечей');
+    animateResultCandles(resultCandles, result.data.isCorrect);
+
+  } catch (error: any) {
+    console.error('❌ makeGuess:', error);
+    gameState.value = 'playing';
+    authStore.safeShowAlert('Ошибка сети');
   }
 };
 
@@ -510,6 +463,14 @@ onUnmounted(() => {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce {
+  animation: bounce 1.5s infinite;
 }
 
 @keyframes slideDown {

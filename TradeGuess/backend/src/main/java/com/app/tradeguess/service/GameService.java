@@ -35,58 +35,64 @@ public class GameService {
     private final GuessAttemptRepository guessAttemptRepository;
     private final UserRepository userRepository;
     private final StatsService statsService;
-    private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final AttemptService attemptService;
 
-    public ChartResponse getTrainingChart(Long telegramId) {
+    public ChartResponse getTrainingChart(Long telegramId,String mode) {
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        User user  = userRepository.findByTelegramId(telegramId)
-                .orElseThrow(()-> new RuntimeException("Пользователь не найден"));
-
-        Long userId = user.getId();
-        Integer attemptsToday = getDailyAttempts(userId);
-
-        if (attemptsToday >= 10) {
+        int attemptsLeft = attemptService.getRemainingAttempts(user.getId());
+        if (attemptsLeft <= 0) {
             throw new RuntimeException("Дневной лимит исчерпан. Попробуйте завтра!");
         }
 
         ChartSegment segment = getRandomSegment();
-
         if (segment == null) {
             throw new RuntimeException("Нет доступных графиков. Добавьте данные в chart_segments.");
         }
 
+        List<ChartResponse.Candle> displayCandles = parseCandles(segment.getDisplayCandles(),ChartResponse.Candle.class);
+
         return ChartResponse.builder()
                 .segmentId(segment.getId())
-                .candles(parseCandles(segment.getDisplayCandles(), ChartResponse.Candle.class))
-                .attemptsLeft(10 - attemptsToday)
+                .candles(displayCandles)
+                .attemptsLeft(attemptsLeft == Integer.MAX_VALUE ? null : attemptsLeft)
                 .build();
     }
 
+
+
     @Transactional
-    public GuessResponse processGuess(Long telegramId, GuessRequest request) {
+    public GuessResponse processGuess(Long telegramId, GuessRequest request,String mode) {
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + telegramId));
 
-        Long userId = user.getId();
-
         ChartSegment segment = chartSegmentRepository.findById(request.getSegmentId())
-                .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: " + request.getSegmentId()));
+                .orElseThrow(() -> new RuntimeException("Сегмент не найден. ID: "));
 
         boolean isCorrect = checkIfCorrect(segment, request.getDirection());
 
         saveAttempt(user, segment, request.getDirection(), isCorrect);
-        incrementDailyAttempts(userId);
+        attemptService.incrementAttempts(user.getId());
 
         statsService.evictUserStatsCacheByTelegramId(telegramId);
+
+        List<GuessResponse.Candle> resultCandles = parseCandles(segment.getResultCandles(), GuessResponse.Candle.class);
+
+        if("single".equalsIgnoreCase(mode) && !resultCandles.isEmpty()) {
+            resultCandles = List.of(resultCandles.get(0));
+        }
 
         return GuessResponse.builder()
                 .isCorrect(isCorrect)
                 .message(isCorrect ? "Правильно!" : "Неправильно!")
-                .resultCandles(parseCandles(segment.getResultCandles(), GuessResponse.Candle.class))
+                .resultCandles(resultCandles)
                 .priceChangePercent(calculatePriceChangePercent(segment))
                 .build();
     }
+
+
 
     private boolean checkIfCorrect(ChartSegment segment, TradeDirection direction) {
         Integer correctDirection = segment.getCalculatedDirection();
@@ -126,24 +132,6 @@ public class GameService {
                     return chartSegmentRepository.findById(randomId)
                             .orElseThrow(() -> new RuntimeException("Сегмент не найден"));
                 });
-    }
-
-    private Integer getDailyAttempts(Long userId) {
-        String key = "user:" + userId + ":attempts:" + LocalDate.now();
-        String attempts = redisTemplate.opsForValue().get(key);
-        log.debug("Daily attempts for user {}: {}", userId, attempts);
-        return attempts != null ? Integer.parseInt(attempts) : 0;
-    }
-
-    private void incrementDailyAttempts(Long userId) {
-        String key = "user:" + userId + ":attempts:" + LocalDate.now();
-        Long attempts = redisTemplate.opsForValue().increment(key);
-
-        if (attempts == 1) {
-            redisTemplate.expire(key, 1, TimeUnit.DAYS);
-        }
-
-        log.info("Увеличено количество попыток для пользователя {}: {}", userId, attempts);
     }
 
     private <T> List<T> parseCandles(String candlesJson, Class<T> candleClass) {

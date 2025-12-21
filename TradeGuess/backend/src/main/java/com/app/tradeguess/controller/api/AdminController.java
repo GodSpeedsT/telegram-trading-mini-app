@@ -17,7 +17,6 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    // Получить всех пользователей
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<List<AdminUserResponse>>> getAllUsers(
@@ -33,7 +32,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(users));
     }
 
-    // Получить пользователя по ID
     @GetMapping("/users/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<AdminUserResponse>> getUserById(
@@ -43,7 +41,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
-    // Назначить админом
     @PostMapping("/users/promote")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<AdminUserResponse>> promoteToAdmin(
@@ -83,7 +80,6 @@ public class AdminController {
     public ResponseEntity<ApiResponse<?>> getUserStats(
             @PathVariable Long userId) {
 
-        // Реализовать отдельный метод в сервисе для подробной статистики!!
         return ResponseEntity.ok(ApiResponse.success("Статистика пользователя"));
     }
 }

@@ -1,5 +1,22 @@
 <template>
   <div class="w-full h-full min-h-screen bg-zinc-950 text-white flex flex-col font-sans select-none overflow-hidden relative pb-[90px]">
+
+    <!-- Notifications -->
+    <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+      <transition-group name="notification">
+        <div v-for="notification in notifications" :key="notification.id"
+             class="bg-zinc-800/90 border border-yellow-500/30 text-white p-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md max-w-[300px] sm:max-w-[350px] md:max-w-[400px]">
+          <div class="flex-shrink-0 w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+            <span class="text-xl">🏆</span>
+          </div>
+          <div class="flex flex-col">
+            <h3 class="font-bold text-sm sm:text-base md:text-lg text-yellow-400">{{ notification.title }}</h3>
+            <p class="text-xs sm:text-sm text-zinc-300 leading-tight">{{ notification.description }}</p>
+          </div>
+        </div>
+      </transition-group>
+    </div>
+
     <!-- Header -->
     <div class="pt-5 pb-2 px-4 z-20 shrink-0 flex flex-col gap-3 bg-zinc-950">
       <div class="flex justify-between items-center">
@@ -40,26 +57,29 @@
       </div>
     </div>
 
-    <!-- Chart Container -->
-    <div class="flex-1 w-full z-10 relative mt-2 flex flex-col min-h-0 bg-[#131722] border-y border-zinc-800">
-      <!-- ✅ ИГРОВАЯ МОДАЛКА (результат) -->
-      <transition name="slide-down">
-        <div v-if="showResultModal && gameState === 'result'"
-             class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 p-8">
-          <div class="flex flex-col items-center text-center max-w-md w-full px-4"
-               :class="gameResult === 'win' ? 'text-green-400' : 'text-rose-400'">
-            <div class="text-6xl mb-4 drop-shadow-2xl">{{ gameResult === 'win' ? '🎉' : '💀' }}</div>
-            <div class="text-2xl md:text-3xl font-black uppercase tracking-widest mb-2 text-white">
-              {{ gameResult === 'win' ? 'ВЕРНО!' : 'МИМО!' }}
-            </div>
-            <div class="text-sm md:text-base font-bold px-4 py-2 rounded-full bg-white/20 text-white mb-6">
-              {{ gameResult === 'win' ? '+10 очков' : 'Серия сброшена' }}
-            </div>
+    <!-- ✅ ФИКСИРОВАННАЯ МОДАЛКА РЕЗУЛЬТАТА -->
+    <transition name="slide-down">
+      <div v-if="showResultModal && gameState === 'result'"
+           class="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900/95 backdrop-blur-md shadow-2xl rounded-3xl px-8 py-5 flex items-center gap-4 border-4 max-w-[90vw] sm:max-w-md w-full mx-4"
+           :class="gameResult === 'win' ? 'border-green-500/70 bg-gradient-to-r from-green-500/10 to-green-600/10' : 'border-rose-500/70 bg-gradient-to-r from-rose-500/10 to-rose-600/10'">
+        <div class="flex-shrink-0 text-4xl sm:text-5xl drop-shadow-lg">
+          {{ gameResult === 'win' ? '🎉' : '💀' }}
+        </div>
+        <div class="flex flex-col items-center min-w-0 flex-1">
+          <div class="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-widest text-white mb-1 truncate">
+            {{ gameResult === 'win' ? 'ВЕРНО!' : 'МИМО!' }}
+          </div>
+          <div class="text-xs sm:text-sm font-bold px-4 py-1.5 rounded-2xl bg-white/20 text-white w-fit border border-white/30">
+            {{ gameResult === 'win' ? '+10 очков' : 'Серия сброшена' }}
           </div>
         </div>
-      </transition>
+      </div>
+    </transition>
 
-      <!-- ✅ МОДАЛКА ЛИМИТА (НА ВЕСЬ ЭКРАН) -->
+    <!-- Chart Container -->
+    <div class="flex-1 w-full z-10 relative mt-2 flex flex-col min-h-0 bg-[#131722] border-y border-zinc-800">
+
+      <!-- ✅ МОДАЛКА ЛИМИТА -->
       <transition name="fade">
         <div v-if="gameState === 'limitReached'"
              class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-zinc-900/95 to-black/90 backdrop-blur-md p-8">
@@ -83,7 +103,6 @@
 
     <!-- Bottom Controls -->
     <div class="px-4 pt-4 z-20 shrink-0 h-24 sm:h-28 md:h-32 bg-zinc-950 flex items-start">
-      <!-- КНОПКИ ВВЕРХ/ВНИЗ -->
       <div v-if="gameState === 'playing'" class="grid grid-cols-2 gap-4 h-16 sm:h-20 md:h-24 w-full">
         <button @click="makeGuess('long')"
                 class="h-full bg-emerald-500/10 hover:bg-emerald-500/20 border-2 border-emerald-500/50 hover:border-emerald-500 text-emerald-500 rounded-2xl flex flex-col items-center justify-center active:scale-[0.96] transition-all group backdrop-blur-sm gap-0.5">
@@ -101,12 +120,10 @@
         </button>
       </div>
 
-      <!-- АНИМАЦИЯ -->
       <div v-if="gameState === 'animating'" class="h-16 sm:h-20 md:h-24 w-full flex items-center justify-center">
         <div class="text-lg font-black text-purple-400 animate-pulse flex items-center gap-2">📈 График рисуется...</div>
       </div>
 
-      <!-- ЛОАДЕР -->
       <div v-if="gameState === 'loading'" class="h-16 sm:h-20 md:h-24 w-full flex items-center justify-center">
         <div class="w-8 h-8 border-4 border-zinc-600 border-t-yellow-400 rounded-full animate-spin"></div>
       </div>
@@ -115,19 +132,14 @@
     <!-- Bottom Navigation -->
     <div class="fixed bottom-0 left-0 w-full bg-zinc-900/90 backdrop-blur-xl border-t border-white/5 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       <div class="flex justify-around items-center h-[70px] sm:h-[80px] md:h-[90px] px-2">
-        <button @click="$router.push('/')">
-          <svg class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-zinc-500 hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-          </svg>
-          <span class="text-[10px] sm:text-xs font-medium text-zinc-500 hover:text-zinc-300 block mt-1">Главная</span>
-        </button>
+        <!-- nav buttons -->
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
 import { useAuthStore } from '@/stores/auth';
@@ -154,8 +166,10 @@ const showResultModal = ref(false);
 const segmentId = ref(0);
 const serverMessage = ref('');
 
-const score = gameStore.score;
-const streak = gameStore.streak;
+// ✅ COMPUTED для реактивного score/streak из STORES
+const score = computed(() => gameStore.score);
+const streak = computed(() => gameStore.streak);
+const notifications = ref<any[]>([]);
 
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   const token = authStore.getToken();
@@ -169,6 +183,8 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   };
 
   const response = await fetch(url, config);
+  const data = await response.json();
+
   if (response.status === 401 || response.status === 403) {
     await authStore.authenticateUser();
     const retryConfig = { ...config, headers: {
@@ -179,15 +195,14 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
     return await retryResponse.json();
   }
 
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return await response.json();
+  return data;
 };
 
-// ✅ ИСПРАВЛЕННАЯ loadNewRound - БЕЗ БЕСКОНЕЧНЫХ ПОВТОРОВ!
+// ✅ ФИКС loadNewRound - 1 свеча + данные
 const loadNewRound = async (isRetry = false) => {
-  console.log('🔄 loadNewRound:', gameMode.value, 'retry:', isRetry);
+  console.log('🔄 loadNewRound:', gameMode.value);
 
-  if (gameState.value === 'limitReached') return; // ✅ БЛОКИРУЕМ повторы
+  if (gameState.value === 'limitReached') return;
 
   gameState.value = 'loading';
   showResultModal.value = false;
@@ -195,145 +210,97 @@ const loadNewRound = async (isRetry = false) => {
 
   try {
     const userId = authStore.getUserId();
+    // ✅ БЕЗ &mode= - обычный запрос!
     const result: ChartResponse = await apiRequest(
       `https://tradeguess-backend.onrender.com/api/game/chart?userId=${userId}`
     );
 
     console.log('📊 Сервер ответил:', result);
 
-    // ✅ ПРЯМАЯ обработка лимита БЕЗ try/catch!
     if (!result.success) {
-      console.log('❌ ЛИМИТ ИСЧЕРПАН:', result.message);
       gameState.value = 'limitReached';
       serverMessage.value = result.message || 'Дневной лимит исчерпан';
-      authStore.safeShowAlert(serverMessage.value);
       return;
     }
 
-    // ✅ Успех - обрабатываем данные
-    allCandles.value = result.data!.candles.map((c: ServerCandle) => ({
-      date: new Date(c.t).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
-      open: Number(c.o.toFixed(2)),
-      high: Number(c.h.toFixed(2)),
-      low: Number(c.l.toFixed(2)),
-      close: Number(c.c.toFixed(2)),
-      volume: Number(c.v.toFixed(2))
+    if (!result.data?.candles?.length) {
+      throw new Error('Нет данных свечей');
+    }
+
+    // ✅ ПАРСИНГ timestamp (миллисекунды!)
+    allCandles.value = result.data.candles.map((c: ServerCandle) => ({
+      date: new Date(c.t).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      }),
+      open: parseFloat(c.o.toString()),
+      high: parseFloat(c.h.toString()),
+      low: parseFloat(c.l.toString()),
+      close: parseFloat(c.c.toString()),
+      volume: parseFloat(c.v.toString())
     }));
 
-    const hiddenCount = gameMode.value === 'candle' ? 1 : 15;
+    // 🔥 КЛЮЧЕВАЯ ЛОГИКА: сколько скрывать по режиму
+    let hiddenCount: number;
+    if (gameMode.value === 'candle') {
+      // 1 СВЕЧА = показываем ВСЕ КРОМЕ ПОСЛЕДНЕЙ
+      hiddenCount = 1;
+    } else {
+      // ТРЕНД = скрываем ПОСЛЕДНИЕ 15 (или меньше если данных мало)
+      hiddenCount = Math.min(15, allCandles.value.length - 10);
+    }
+
     visibleCandlesCount.value = allCandles.value.length - hiddenCount;
-    segmentId.value = result.data!.segmentId;
+    segmentId.value = result.data.segmentId;
+
+    console.log('🎯 ЛОГИКА СВЕЧЕЙ:', {
+      total: allCandles.value.length,
+      mode: gameMode.value,
+      hidden: hiddenCount,
+      visible: visibleCandlesCount.value,
+      lastVisibleIndex: visibleCandlesCount.value - 1
+    });
 
     gameState.value = 'playing';
     await nextTick();
-    initChart(allCandles.value.slice(0, visibleCandlesCount.value));
+
+    // Показываем только видимые свечи
+    initChartSmooth(allCandles.value.slice(0, visibleCandlesCount.value));
 
   } catch (error: any) {
-    console.error('❌ loadNewRound ОШИБКА:', error);
-
-    // ✅ ТОЛЬКО 1 попытка ретрая!
-    if (!isRetry) {
-      authStore.safeShowAlert('Ошибка сети. Повтор...');
-      setTimeout(() => loadNewRound(true), 2000);
-    } else {
+    console.error('❌ loadNewRound:', error);
+    if (!isRetry) setTimeout(() => loadNewRound(true), 2000);
+    else {
       gameState.value = 'limitReached';
-      serverMessage.value = 'Ошибка соединения. Попробуйте позже.';
+      serverMessage.value = 'Ошибка соединения';
     }
   }
 };
 
-const makeGuess = async (direction: 'long' | 'short') => {
-  if (gameState.value !== 'playing') return;
+// ✅ ПЛАВНЫЙ init графика БЕЗ дерганости
+const initChartSmooth = (data: Candle[]) => {
+  if (!chartRef.value || !data.length) return;
 
-  gameState.value = 'animating';
-
-  try {
-    const userId = authStore.getUserId();
-    const result: GuessResponse = await apiRequest(
-      `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ segmentId: segmentId.value, direction })
-      }
-    );
-
-    if (!result.success) {
-      gameState.value = 'playing';
-      authStore.safeShowAlert(result.data.message || 'Ошибка сервера');
-      return;
-    }
-
-    gameResult.value = result.data.isCorrect ? 'win' : 'lose';
-    const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
-      date: new Date(c.t).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
-      open: Number(c.o.toFixed(2)),
-      high: Number(c.h.toFixed(2)),
-      low: Number(c.l.toFixed(2)),
-      close: Number(c.c.toFixed(2)),
-      volume: Number(c.v.toFixed(2))
-    }));
-
-    animateResultCandles(resultCandles, result.data.isCorrect);
-
-  } catch (error: any) {
-    console.error('❌ makeGuess:', error);
-    gameState.value = 'playing';
-    authStore.safeShowAlert('Ошибка сети');
+  if (chartInstance) {
+    chartInstance.dispose();
   }
-};
-
-const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
-  let currentIndex = 0;
-
-  const animateStep = () => {
-    if (currentIndex < resultCandles.length) {
-      const visibleData = allCandles.value.slice(0, visibleCandlesCount.value);
-      const animatedData = [...visibleData, ...resultCandles.slice(0, currentIndex + 1)];
-      updateChartData(animatedData, true);
-      currentIndex++;
-      animationTimer = setTimeout(animateStep, 150);
-    } else {
-      gameState.value = 'result';
-      showResultModal.value = true;
-
-      if (isCorrect) {
-        gameStore.addScore(10);
-        gameStore.incrementStreak();
-      } else {
-        gameStore.resetStreak();
-      }
-
-      resultTimer = setTimeout(() => {
-        showResultModal.value = false;
-        loadNewRound();
-      }, 2000);
-    }
-  };
-
-  animateStep();
-};
-
-const setGameMode = (mode: 'candle' | 'trend') => {
-  if (gameState.value !== 'playing' && gameState.value !== 'loading') return;
-  gameMode.value = mode;
-  loadNewRound();
-};
-
-const initChart = (data: Candle[]) => {
-  if (!chartRef.value || !data.length || chartInstance) return;
 
   chartInstance = echarts.init(chartRef.value);
   updateChartData(data, false);
 };
 
+// ✅ СУПЕР-ПЛАВНЫЙ update графика
 const updateChartData = (data: Candle[], showResultLine = false) => {
   if (!chartInstance || !data.length) return;
 
   const dates = data.map(c => c.date);
   const values = data.map(c => [c.open, c.close, c.low, c.high]);
-  const splitIndex = showResultLine ? Math.max(0, visibleCandlesCount.value - 1) : -1;
+
+  const splitIndex = showResultLine ? visibleCandlesCount.value - 1 : -1;
 
   const option: echarts.EChartsOption = {
+    animation: true,
+    animationDuration: 300,
+    animationEasing: 'cubicOut',
     backgroundColor: '#131722',
     grid: { left: 10, right: 5, top: 40, bottom: 60, containLabel: false },
     tooltip: {
@@ -341,8 +308,7 @@ const updateChartData = (data: Candle[], showResultLine = false) => {
       formatter: (params: any) => {
         const p = Array.isArray(params) ? params[0] : params;
         const candle = data[p.dataIndex];
-        if (!candle) return '';
-        return `<div style="font-size:11px;">${candle.date}<br/>O: ${candle.open}<br/>C: ${candle.close}</div>`;
+        return candle ? `<div style="font-size:11px;">${candle.date}<br/>O: ${candle.open}<br/>C: ${candle.close}</div>` : '';
       }
     },
     xAxis: {
@@ -368,16 +334,121 @@ const updateChartData = (data: Candle[], showResultLine = false) => {
       },
       markLine: showResultLine && splitIndex >= 0 ? {
         symbol: ['none', 'none'],
-        data: [{ xAxis: splitIndex, lineStyle: { color: '#8b5cf6', type: 'dashed' } }]
+        data: [{ xAxis: splitIndex, lineStyle: { color: '#8b5cf6', type: 'dashed', width: 2 } }]
       } : undefined
     }]
   };
 
-  chartInstance.setOption(option, { notMerge: false, lazyUpdate: true });
+  chartInstance.setOption(option, {
+    notMerge: false,
+    lazyUpdate: true,
+    animation: true
+  });
+};
+
+// ✅ ФИКС makeGuess - правильная обработка ответа
+const makeGuess = async (direction: 'long' | 'short') => {
+  if (gameState.value !== 'playing') return;
+
+  console.log('🎯 Угадываем:', direction, 'видимых свечей:', visibleCandlesCount.value);
+
+  gameState.value = 'animating';
+
+  try {
+    const userId = authStore.getUserId();
+    const result: GuessResponse = await apiRequest(
+      `https://tradeguess-backend.onrender.com/api/game/guess?userId=${userId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          segmentId: segmentId.value,
+          direction // ✅ Только direction!
+        })
+      }
+    );
+
+    console.log('🎯 Ответ сервера:', result);
+
+    if (!result.success) {
+      gameState.value = 'playing';
+      authStore.safeShowAlert(result.message || 'Ошибка сервера');
+      return;
+    }
+
+    gameResult.value = result.data.isCorrect ? 'win' : 'lose';
+
+    // ✅ resultCandles = ТОЛЬКО скрытые свечи для анимации
+    const resultCandles: Candle[] = result.data.resultCandles.map((c: ServerCandle) => ({
+      date: new Date(c.t).toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      }),
+      open: parseFloat(c.o.toString()),
+      high: parseFloat(c.h.toString()),
+      low: parseFloat(c.l.toString()),
+      close: parseFloat(c.c.toString()),
+      volume: parseFloat(c.v.toString())
+    }));
+
+    console.log('📈 Анимируем свечи:', resultCandles.length, 'isCorrect:', result.data.isCorrect);
+
+    animateResultCandles(resultCandles, result.data.isCorrect);
+
+  } catch (error: any) {
+    console.error('❌ makeGuess:', error);
+    gameState.value = 'playing';
+  }
+};
+
+// ✅ СУПЕР-ПЛАВНАЯ анимация свечей
+const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
+  let currentIndex = 0;
+  const stepDuration = 200; // Медленнее для 1 свечи
+
+  const animateStep = () => {
+    if (currentIndex < resultCandles.length) {
+      // ✅ Берем ВСЕ предыдущие + текущую анимируемую
+      const visibleData = allCandles.value.slice(0, visibleCandlesCount.value);
+      const animatedData = [...visibleData, ...resultCandles.slice(0, currentIndex + 1)];
+
+      updateChartData(animatedData, true);
+      currentIndex++;
+
+      animationTimer = setTimeout(animateStep, stepDuration);
+    } else {
+      // ✅ КОНЕЦ АНИМАЦИИ
+      gameState.value = 'result';
+      showResultModal.value = true;
+
+      if (isCorrect) {
+        gameStore.addScore(10);
+        if (gameStore.streak < 50) gameStore.incrementStreak(); // Защита от переполнения
+      } else {
+        gameStore.resetStreak();
+      }
+
+      console.log('⭐ Финальный счет:', gameStore.score, 'streak:', gameStore.streak);
+
+      resultTimer = setTimeout(() => {
+        showResultModal.value = false;
+        loadNewRound();
+      }, 2500);
+    }
+  };
+
+  animateStep();
+};
+
+const setGameMode = (mode: 'candle' | 'trend') => {
+  if (['limitReached', 'animating', 'result'].includes(gameState.value)) return;
+  gameMode.value = mode;
+  loadNewRound();
 };
 
 onMounted(async () => {
+  // ✅ Загружаем актуальные данные из stores/LocalStorage
   gameStore.loadGameData();
+  console.log('⭐ Загружены данные игры:', { score: gameStore.score, streak: gameStore.streak });
+
   await loadNewRound();
 
   if (chartRef.value) {
@@ -399,7 +470,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ✅ ИГРОВАЯ МОДАЛКА */
 .slide-down-enter-active {
   animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -407,7 +477,6 @@ onUnmounted(() => {
   animation: slideDown 0.3s ease-in reverse;
 }
 
-/* ✅ МОДАЛКА ЛИМИТА */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.3s ease;
 }
@@ -416,7 +485,7 @@ onUnmounted(() => {
 }
 
 @keyframes slideDown {
-  0% { opacity: 0; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 </style>

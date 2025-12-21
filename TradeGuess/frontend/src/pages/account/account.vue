@@ -1,12 +1,25 @@
 <template>
-  <div class="min-h-screen flex flex-col justify-center items-center p-4 relative bg-zinc-950 overflow-hidden">
-    <div class="absolute inset-0 w-full h-full pointer-events-none"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none"></div>
+  <div class="min-h-screen flex flex-col justify-center items-center p-4 relative bg-[#09090b] overflow-hidden">
+    <!-- Фоновый рисунок с пазлами -->
+    <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="puzzlePattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+            <path id="p" d="M-2 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M-2 100 v35 a15 15 0 0 0 0 30 v37 M98 0 v35 a15 15 0 0 0 0 30 v70 a15 15 0 0 1 0 30 v37 M198 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M0 -2 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37 M0 98 h35 a15 15 0 0 0 30 0 h70 a15 15 0 0 1 30 0 h37 M0 198 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37"
+                  fill="none" stroke="white" stroke-width="1.5" opacity="0.08" />
+            <use href="#p" stroke="black" stroke-width="4" opacity="0.6" transform="translate(1,1)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#puzzlePattern)" />
+      </svg>
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none z-1"></div>
 
+    <!-- Основной контейнер -->
     <div class="relative z-10 w-full flex flex-col items-center overflow-hidden bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] max-w-[340px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] 2xl:max-w-[800px] pt-6 sm:pt-8 md:pt-10 lg:pt-12 xl:pt-14 2xl:pt-16 pb-8 sm:pb-10 md:pb-12 lg:pb-14 xl:pb-16 2xl:pb-20 rounded-[30px] sm:rounded-[40px] lg:rounded-[50px] 2xl:rounded-[60px]">
 
       <!-- Декоративная полоса сверху -->
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent opacity-50 animate-pulse"></div>
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent opacity-50 animate-pulse"></div>
 
       <!-- Секция профиля -->
       <div class="flex flex-col items-center gap-3 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-7 pb-8 sm:pb-9 md:pb-10 lg:pb-12 xl:pb-14 2xl:pb-16">
@@ -35,8 +48,8 @@
         <div class="flex flex-col items-center gap-1">
           <!-- ✅ Имя пользователя вместо "Гость" -->
           <span class="text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl 2xl:text-4xl font-bold text-white">
-          {{ userName || 'Гость' }}
-        </span>
+            {{ userName || 'Гость' }}
+          </span>
           <!-- Username -->
           <div class="flex items-center gap-2 text-zinc-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -74,7 +87,9 @@
             <span class="text-zinc-400 font-medium text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl">Результаты и прогресс</span>
           </div>
         </button>
-                <button @click="leaderboard" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px]">
+        
+        <!-- Лидерборд -->
+        <button @click="leaderboard" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-500 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] xl:h-[84px] 2xl:h-[88px]">
           <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-pink-400 bg-yellow-500/10 rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-7 lg:h-7 xl:w-8 xl:h-8 2xl:w-9 2xl:h-9">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -175,4 +190,3 @@ function goBack() {
   routerInstance.back()
 }
 </script>
-

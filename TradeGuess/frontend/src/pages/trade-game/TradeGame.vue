@@ -1,21 +1,5 @@
 <template>
   <div class="w-full h-full min-h-screen bg-zinc-950 text-white flex flex-col font-sans select-none overflow-hidden relative pb-[90px]">
-    <!-- Notifications -->
-    <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-      <transition-group name="notification">
-        <div v-for="notification in notifications" :key="notification.id"
-             class="bg-zinc-800/90 border border-yellow-500/30 text-white p-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md max-w-[300px] sm:max-w-[350px] md:max-w-[400px]">
-          <div class="flex-shrink-0 w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-            <span class="text-xl">🏆</span>
-          </div>
-          <div class="flex flex-col">
-            <h3 class="font-bold text-sm sm:text-base md:text-lg text-yellow-400">{{ notification.title }}</h3>
-            <p class="text-xs sm:text-sm text-zinc-300 leading-tight">{{ notification.description }}</p>
-          </div>
-        </div>
-      </transition-group>
-    </div>
-
     <!-- Header -->
     <div class="pt-5 pb-2 px-4 z-20 shrink-0 flex flex-col gap-3 bg-zinc-950">
       <div class="flex justify-between items-center">

@@ -93,7 +93,7 @@
         </template>
       </div>
       <div class="w-full flex shrink-0 p-3 sm:p-5 items-center justify-center">
-        <div class="flex bg-zinc-900/80 p-0.5 sm:p-1 rounded-xl sm:rounded-2xl border border-zinc-800 shadow-inner w-full max-w-[280px] sm:max-w-[340px]">
+        <div class="flex p-0.5 sm:p-1 rounded-xl sm:rounded-2xl border border-zinc-800 w-full max-w-[280px] sm:max-w-[340px] bg-black/20 backdrop-blur-lg">
           <button v-for="p in periods" :key="p.value" @click="currentPeriod = p.value; fetchLeaderboard(p.value)" class="flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase transition-all duration-300" :class="[currentPeriod === p.value ? 'bg-zinc-800 text-white shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300']">
             {{ p.label }}
           </button>

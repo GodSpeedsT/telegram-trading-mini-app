@@ -38,7 +38,7 @@ public class GameService {
     private final ObjectMapper objectMapper;
     private final AttemptService attemptService;
 
-    public ChartResponse getTrainingChart(Long telegramId) {
+    public ChartResponse getTrainingChart(Long telegramId,String mode) {
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
@@ -52,17 +52,19 @@ public class GameService {
             throw new RuntimeException("Нет доступных графиков. Добавьте данные в chart_segments.");
         }
 
+        List<ChartResponse.Candle> displayCandles = parseCandles(segment.getDisplayCandles(),ChartResponse.Candle.class);
+
         return ChartResponse.builder()
                 .segmentId(segment.getId())
-                .candles(parseCandles(segment.getDisplayCandles(), ChartResponse.Candle.class))
-                .attemptsLeft(attemptsLeft == Integer.MAX_VALUE ? null : attemptsLeft) // для админов null/∞
+                .candles(displayCandles)
+                .attemptsLeft(attemptsLeft == Integer.MAX_VALUE ? null : attemptsLeft)
                 .build();
     }
 
 
 
     @Transactional
-    public GuessResponse processGuess(Long telegramId, GuessRequest request) {
+    public GuessResponse processGuess(Long telegramId, GuessRequest request,String mode) {
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден. ID: " + telegramId));
 
@@ -76,10 +78,16 @@ public class GameService {
 
         statsService.evictUserStatsCacheByTelegramId(telegramId);
 
+        List<GuessResponse.Candle> resultCandles = parseCandles(segment.getResultCandles(), GuessResponse.Candle.class);
+
+        if("single".equalsIgnoreCase(mode) && !resultCandles.isEmpty()) {
+            resultCandles = List.of(resultCandles.get(0));
+        }
+
         return GuessResponse.builder()
                 .isCorrect(isCorrect)
                 .message(isCorrect ? "Правильно!" : "Неправильно!")
-                .resultCandles(parseCandles(segment.getResultCandles(), GuessResponse.Candle.class))
+                .resultCandles(resultCandles)
                 .priceChangePercent(calculatePriceChangePercent(segment))
                 .build();
     }

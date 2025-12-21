@@ -17,6 +17,13 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    public boolean isAdmin(Long userId) {
+        return userRepository.findById(userId)
+        .map(User::getRole)
+                .map(role -> role.equals("ADMIN") || role.equals("SUPER_ADMIN"))
+                .orElse(false);
+    }
+
     public AuthResponse authenticate(AuthRequest request) {
         User user = findOrCreateUser(request);
 

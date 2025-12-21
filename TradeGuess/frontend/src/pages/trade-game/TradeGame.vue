@@ -1,5 +1,17 @@
 <template>
   <div class="w-full h-full min-h-screen bg-zinc-950 text-white flex flex-col font-sans select-none overflow-hidden relative pb-[90px]">
+    <!-- Гарантированный фон мозаика (как в меню) -->
+    <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="gamePuzzle" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+            <path d="M-2 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M-2 100 v35 a15 15 0 0 0 0 30 v37 M98 0 v35 a15 15 0 0 0 0 30 v70 a15 15 0 0 1 0 30 v37 M198 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M0 -2 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37 M0 98 h35 a15 15 0 0 0 30 0 h70 a15 15 0 1 1 30 0 h37 M0 198 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37"
+                  fill="none" stroke="white" stroke-width="1.5" opacity="0.05" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#gamePuzzle)" />
+      </svg>
+    </div>
 
     <!-- Notifications -->
     <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
@@ -149,7 +161,10 @@ import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
+import { updateAllAchievements, loadAchievements } from '@/pages/achievements/utils/achievements';
 import type { Candle, ChartResponse, GuessResponse, ServerCandle } from '@/entities/trade-game/types';
+import type { Achievement } from '@/pages/achievements/utils/achievements';
+
 
 const $router = useRouter();
 const authStore = useAuthStore();
@@ -174,6 +189,11 @@ const serverMessage = ref('');
 const score = computed(() => gameStore.score);
 const streak = computed(() => gameStore.streak);
 const notifications = ref<any[]>([]);
+
+const notify = (achievement: Achievement) => {
+  notifications.value.push({ id: Date.now() + Math.random(), title: achievement.title, description: achievement.description });
+  setTimeout(() => { if (notifications.value.length > 0) notifications.value.shift(); }, 5000);
+};
 
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   const token = authStore.getToken();
@@ -410,6 +430,12 @@ const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
       }
 
       console.log('⭐ Итог:', { score: gameStore.score, streak: gameStore.streak });
+      const newlyUnlocked = updateAllAchievements({
+        totalWins: 0, trendWins: 0, candleWins: 0,
+        currentTrendStreak: 0, currentCandleStreak: 0,
+        totalScore: gameStore.score, currentStreak: gameStore.streak
+      });
+      newlyUnlocked.forEach(notify);
 
       resultTimer = setTimeout(() => {
         showResultModal.value = false;

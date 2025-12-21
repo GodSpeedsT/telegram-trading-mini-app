@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="175038ba-09da-48dd-ba7b-13587e4c3f90" name="Changes" comment="" />
+    <list default="true" id="175038ba-09da-48dd-ba7b-13587e4c3f90" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/TradeGuess/frontend/src/pages/trade-game/TradeGame.vue" beforeDir="false" afterPath="$PROJECT_DIR$/TradeGuess/frontend/src/pages/trade-game/TradeGame.vue" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -75,7 +77,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1766357242199</updated>
-      <workItem from="1766357245287" duration="1113000" />
+      <workItem from="1766357245287" duration="1435000" />
     </task>
     <servers />
   </component>
@@ -87,7 +89,19 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="el_tarantasso_current_branch" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>

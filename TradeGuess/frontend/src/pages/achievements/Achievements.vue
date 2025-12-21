@@ -106,18 +106,27 @@ interface AchievementWithStars extends Achievement {
 
 const achievements = ref<AchievementWithStars[]>([]);
 const stats = computed(() => getStats());
+const gameData = ref({ score: 0, streak: 0 });
 const block = {
   title: 'Достижения',
   subtitle: 'Мастерство TradeGuess'
 };
 
+const loadGameData = () => {
+  try {
+    const data = JSON.parse(localStorage.getItem('gameData') || '{}');
+    gameData.value = { score: data.score || 0, streak: data.streak || 0 };
+  } catch {
+    gameData.value = { score: 0, streak: 0 };
+  }
+};
+
 const totalStars = computed(() => {
-  return achievements.value
-    .filter(a => a.unlocked)
-    .reduce((sum, a) => sum + (a.id % 2 === 0 ? 50 : 100), 0);
+  return gameData.value.score;
 });
 
 onMounted(() => {
+  loadGameData();
   achievements.value = loadAchievements();
 });
 </script>

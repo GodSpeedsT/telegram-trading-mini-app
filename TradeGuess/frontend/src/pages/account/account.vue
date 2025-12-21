@@ -53,7 +53,7 @@
 
       <div class="w-full flex flex-col gap-4 px-6 max-w-[340px] sm:max-w-[350px] md:max-w-[400px] lg:max-w-[450px] xl:max-w-[500px] 2xl:max-w-[550px]">
 
-        <button v-if="isAdmin" @click="viewAdmin" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-emerald-500/30 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] group">
+        <button v-if="isAdmin && !isLoadingAdmin" @click="viewAdmin" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-emerald-500/30 rounded-2xl shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95 h-[68px] sm:h-[72px] md:h-[76px] lg:h-[80px] group">
           <div class="absolute left-3 sm:left-4 md:left-5 lg:left-6 flex items-center justify-center text-emerald-400 bg-emerald-500/10 rounded-full w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.132l.773.772c.3.3.398.743.249 1.14l-.324.873c-.15.404-.083.864.218 1.17l.617.616a1.125 1.125 0 010 1.59l-.617.617a1.125 1.125 0 01-1.17.217l-.873-.324a1.125 1.125 0 01-1.14.249l-.772.773a1.125 1.125 0 01-1.14.249l-.873-.324a1.125 1.125 0 01-1.17.217l-.617.617a1.125 1.125 0 01-1.59 0l-.617-.617a1.125 1.125 0 01-.217-1.17l.324-.873a1.125 1.125 0 01-.249-1.14l-.773-.772a1.125 1.125 0 01-.249-1.14l.324-.873a1.125 1.125 0 01-.217-1.17l-.617-.617a1.125 1.125 0 010-1.59l.617-.617a1.125 1.125 0 011.17-.217l.873.324a1.125 1.125 0 011.14-.249l.772-.773a1.125 1.125 0 011.14-.249l.873.324a1.125 1.125 0 011.17-.217l.617-.617a1.125 1.125 0 011.59 0l.617.617z" />
@@ -114,18 +114,67 @@ const userAvatar = ref('')
 const userName = ref('Гость')
 const userAccountName = ref('no_username')
 const lastLoginTime = ref('')
+const adminUsers = ref<any[]>([])
+const isAdminChecked = ref(false)
+const isLoadingAdmin = ref(false)
+const totalScore = ref(0)
+const maxStreak = ref(0)
 
-const isAdmin = computed(() => {
+const checkAdminStatus = async () => {
+  isLoadingAdmin.value = true
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      console.warn('Токен не найден')
+      return
+    }
+
+    const response = await fetch('https://tradeguess-backend.onrender.com/api/admin/users', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    if (data.success && Array.isArray(data.data)) {
+      adminUsers.value = data.data
+      isAdminChecked.value = true
+    } else {
+      console.warn('Неверный формат ответа API')
+    }
+  } catch (error) {
+    console.error('Ошибка проверки админа:', error)
+  } finally {
+    isLoadingAdmin.value = false
+  }
+}
+
+const localIsAdmin = computed(() => {
   try {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}')
-    return userData.role === 'ROLE_SUPER_ADMIN' || userData.role === 'ROLE_ADMIN' || userData.telegramId === 934084397
+    return userData.role === 'ROLE_SUPER_ADMIN' ||
+      userData.role === 'ROLE_ADMIN' ||
+      userData.telegramId === 934084397
   } catch {
     return false
   }
 })
 
-onMounted(() => {
+// Финальная проверка - API + local fallback
+const isAdmin = computed(() => {
+  return isAdminChecked.value ? adminUsers.value.length > 0 : localIsAdmin.value
+})
+
+onMounted(async () => {
   const tg = telegramWebApp
+  await checkAdminStatus()
   if (tg?.initDataUnsafe?.user) {
     const user = tg.initDataUnsafe.user
     userName.value = user.first_name || 'Гость'

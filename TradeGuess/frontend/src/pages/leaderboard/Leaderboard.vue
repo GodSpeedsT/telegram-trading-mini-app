@@ -1,5 +1,5 @@
 <template>
-  <div class="h-[100dvh] w-full flex flex-col items-center justify-center p-4 relative bg-[#09090b] overflow-hidden pb-[120px] md:pb-4">
+  <div class="h-[100dvh] w-full flex flex-col items-center justify-center p-4 relative bg-[#09090b] overflow-hidden">
     <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
       <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -12,7 +12,7 @@
       </svg>
     </div>
     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none z-1"></div>
-    <div class="relative z-10 w-full max-w-[360px] sm:max-w-[500px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] flex flex-col items-center bg-zinc-900/90 border border-zinc-800 backdrop-blur-2xl shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-500 rounded-[48px] h-fit max-h-[85vh]">
+    <div class="relative z-10 w-full max-w-[360px] sm:max-w-[500px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] flex flex-col items-center bg-zinc-900/90 border border-zinc-800 backdrop-blur-2xl shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-500 rounded-[48px] h-fit max-h-[85vh] translate-y-[-5vh]">
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
       <div class="relative w-full flex items-center justify-center p-5 sm:p-6 md:p-8 shrink-0">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none text-center">РЕЙТИНГ</h1>
@@ -92,8 +92,8 @@
           </div>
         </template>
       </div>
-      <div class="w-full flex shrink-0 bg-zinc-950/60 border-t border-zinc-800/50 p-3 sm:p-5 items-center justify-center backdrop-blur-md">
-        <div class="flex bg-zinc-900 p-0.5 sm:p-1 rounded-xl sm:rounded-2xl border border-zinc-800 shadow-inner w-full max-w-[280px] sm:max-w-[340px]">
+      <div class="w-full flex shrink-0 p-3 sm:p-5 items-center justify-center">
+        <div class="flex bg-zinc-900/80 p-0.5 sm:p-1 rounded-xl sm:rounded-2xl border border-zinc-800 shadow-inner w-full max-w-[280px] sm:max-w-[340px]">
           <button v-for="p in periods" :key="p.value" @click="currentPeriod = p.value; fetchLeaderboard(p.value)" class="flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase transition-all duration-300" :class="[currentPeriod === p.value ? 'bg-zinc-800 text-white shadow-lg border border-zinc-700' : 'text-zinc-500 hover:text-zinc-300']">
             {{ p.label }}
           </button>

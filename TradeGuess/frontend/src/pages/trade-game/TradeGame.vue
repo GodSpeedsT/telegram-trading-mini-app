@@ -57,36 +57,37 @@
       </div>
     </div>
 
-    <!-- ✅ ФИКСИРОВАННАЯ МОДАЛКА РЕЗУЛЬТАТА -->
+    <!-- ✅ ПРАВИЛЬНОЕ ЦЕНТРИРОВАНИЕ -->
     <transition name="slide-down">
       <div v-if="showResultModal && gameState === 'result'"
-           class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-[90vw] max-w-md bg-zinc-900/95 backdrop-blur-xl shadow-2xl rounded-3xl p-8 flex flex-col items-center border-4 mx-4"
-           :class="gameResult === 'win'
-         ? 'border-green-500/80 bg-gradient-to-b from-green-500/20 to-green-900/90 shadow-green-500/30'
-         : 'border-rose-500/80 bg-gradient-to-b from-rose-500/20 to-rose-900/90 shadow-rose-500/30'">
+           class="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
 
-        <!-- Эмодзи БОЛЬШОЙ -->
-        <div class="text-7xl mb-6 drop-shadow-2xl animate-bounce">{{ gameResult === 'win' ? '🎉' : '💀' }}</div>
+        <div class="bg-zinc-900/95 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-[90vw] max-w-md border-4 flex flex-col items-center pointer-events-auto mx-2"
+             :class="gameResult === 'win'
+           ? 'border-green-500/80 bg-gradient-to-b from-green-500/20 to-green-900/90 shadow-green-500/30'
+           : 'border-rose-500/80 bg-gradient-to-b from-rose-500/20 to-rose-900/90 shadow-rose-500/30'">
 
-        <!-- Текст -->
-        <div class="text-center mb-8">
-          <div class="text-3xl font-black uppercase tracking-widest mb-4 text-white">
-            {{ gameResult === 'win' ? 'ВЕРНО!' : 'МИМО!' }}
+          <!-- Эмодзи БОЛЬШОЙ -->
+          <div class="text-7xl mb-6 drop-shadow-2xl animate-bounce">{{ gameResult === 'win' ? '🎉' : '💀' }}</div>
+
+          <!-- Текст -->
+          <div class="text-center mb-8">
+            <div class="text-3xl font-black uppercase tracking-widest mb-4 text-white">
+              {{ gameResult === 'win' ? 'ВЕРНО!' : 'МИМО!' }}
+            </div>
+            <div class="text-lg font-bold px-6 py-3 rounded-2xl bg-white/20 text-white border border-white/40">
+              {{ gameResult === 'win' ? '+10 очков' : 'Серия сброшена' }}
+            </div>
           </div>
-          <div class="text-lg font-bold px-6 py-3 rounded-2xl bg-white/20 text-white border border-white/40">
-            {{ gameResult === 'win' ? '+10 очков' : 'Серия сброшена' }}
+
+          <!-- Очки -->
+          <div class="flex items-center gap-4 text-2xl font-black text-yellow-400 mb-6">
+            <span>⭐ {{ score }}</span>
+            <span v-if="streak > 1" class="text-orange-400">🔥 x{{ streak }}</span>
           </div>
         </div>
-
-        <!-- Очки -->
-        <div class="flex items-center gap-4 text-2xl font-black text-yellow-400 mb-6">
-          <span>⭐ {{ score }}</span>
-          <span v-if="streak > 1" class="text-orange-400">🔥 x{{ streak }}</span>
-        </div>
-
       </div>
     </transition>
-
 
     <!-- Chart Container -->
     <div class="flex-1 w-full z-10 relative mt-2 flex flex-col min-h-0 bg-[#131722] border-y border-zinc-800">

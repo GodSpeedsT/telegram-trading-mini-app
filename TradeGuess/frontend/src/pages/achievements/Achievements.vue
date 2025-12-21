@@ -1,74 +1,102 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-zinc-950 font-sans text-white safe-area-padding pb-nav">
-    <!-- Фоновый паттерн с чётким кубком -->
-    <div class="absolute inset-0 w-full h-full bg-trophy-pattern pointer-events-none"></div>
-    
-    <div class="relative w-full max-w-4xl rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
-      <div class="absolute inset-0 bg-gradient-to-br from-green-900/20 via-zinc-900/80 to-black/50 pointer-events-none"></div>
-      
-      <div class="relative z-10 p-4 sm:p-6 md:p-8 lg:p-10">
-        <!-- Header -->
-        <header class="text-center mb-6 sm:mb-8 md:mb-10">
-          <h1 class="text-2xl sm:text-3xl md:text-4xl font-black mb-2 tracking-tight leading-tight">{{ block.title }}</h1>
-          <p class="text-zinc-500 font-medium text-sm sm:text-base">{{ block.subtitle }}</p>
-        </header>
-
-        <!-- Achievements List -->
-        <div class="space-y-3 sm:space-y-4 max-h-[calc(100vh-320px)] sm:max-h-[calc(100vh-360px)] overflow-y-auto pr-1 custom-scrollbar">
-          <div v-for="achievement in achievements" :key="achievement.id"
-               class="group relative p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl border transition-all duration-300 backdrop-blur-md"
-               :class="achievement.unlocked ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-800/20 border-zinc-800'">
-            
-            <div class="flex items-start sm:items-center gap-3 sm:gap-4 md:gap-5">
-              <!-- Icon -->
-              <div class="shrink-0 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg"
-                   :class="achievement.unlocked ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-zinc-800'">
-                <span class="text-xl sm:text-2xl">{{ achievement.unlocked ? '🏆' : '🔒' }}</span>
+  <div class="h-[100dvh] w-full flex flex-col items-center justify-center p-4 pb-32 md:pb-6 relative bg-[#09090b] overflow-hidden">
+    <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="puzzlePattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+            <path id="p" d="M-2 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M-2 100 v35 a15 15 0 0 0 0 30 v37 M98 0 v35 a15 15 0 0 0 0 30 v70 a15 15 0 0 1 0 30 v37 M198 0 v35 a15 15 0 0 1 0 30 v70 a15 15 0 0 0 0 30 v37 M0 -2 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37 M0 98 h35 a15 15 0 0 0 30 0 h70 a15 15 0 0 1 30 0 h37 M0 198 h35 a15 15 0 0 1 30 0 h70 a15 15 0 0 0 30 0 h37"
+                  fill="none" stroke="white" stroke-width="1.5" opacity="0.08" />
+            <use href="#p" stroke="black" stroke-width="4" opacity="0.6" transform="translate(1,1)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#puzzlePattern)" />
+      </svg>
+    </div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none z-1"></div>
+    <div class="relative z-10 w-full max-w-[340px] sm:max-w-[420px] md:max-w-[500px] lg:max-w-[700px] xl:max-w-[850px] flex flex-col items-center bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 rounded-[40px] max-h-[75vh]">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent opacity-50 animate-pulse"></div>
+      <div class="flex flex-col items-center shrink-0 w-full px-6 pt-8 gap-5">
+        <div class="w-16 h-16 bg-zinc-800 rounded-full border-2 border-zinc-700 flex items-center justify-center shadow-2xl relative overflow-visible shrink-0 transition-transform hover:scale-110">
+          <div class="relative flex items-center justify-center w-full h-full">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="absolute w-12 h-12 text-yellow-500 blur-xl opacity-40 animate-pulse" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm0-11l1.15 2.33 2.57.37-1.86 1.81.44 2.56L12 9.86l-2.3 1.21.44-2.56-1.86-1.81 2.57-.37L12 4z M8 14v8l4-3 4 3v-8"/>
+            </svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" class="relative w-8 h-8 text-yellow-400 drop-shadow-[0_0_12px_rgba(234,179,8,0.7)]" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm0-11l1.15 2.33 2.57.37-1.86 1.81.44 2.56L12 9.86l-2.3 1.21.44-2.56-1.86-1.81 2.57-.37L12 4z M8 14v8l4-3 4 3v-8"/>
+            </svg>
+          </div>
+        </div>
+        <div class="flex flex-col items-center gap-3 text-center">
+          <h1 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">{{ block.title }}</h1>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-3 py-1 bg-zinc-950/50 border border-zinc-800 rounded-full shadow-inner">
+              <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+              <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{{ stats.unlockedCount }}/{{ stats.totalCount }}</span>
+            </div>
+            <span class="text-[9px] font-bold text-zinc-600 uppercase tracking-[0.2em]">{{ block.subtitle }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 w-full overflow-y-auto no-scrollbar px-5 md:px-10 py-6 flex flex-col gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <div v-for="achievement in achievements" :key="achievement.id" class="relative border transition-all duration-300 flex flex-col p-4 gap-3 overflow-hidden rounded-2xl shrink-0" :class="achievement.unlocked
+                 ? 'bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
+                 : 'bg-zinc-800/40 border-zinc-800 hover:border-zinc-700'">
+            <div class="flex items-center gap-3">
+              <div class="shrink-0 flex items-center justify-center rounded-xl border border-white/5 shadow-xl text-lg w-10 h-10" :class="achievement.unlocked ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' : 'bg-zinc-700/50'">
+                {{ achievement.unlocked ? '🏆' : '🔒' }}
               </div>
-
-              <!-- Content -->
-              <div class="flex-1 min-w-0">
-                <!-- Title and Category -->
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2 mb-1">
-                  <h3 class="font-bold text-base sm:text-lg md:text-lg truncate"
-                      :class="achievement.unlocked ? 'text-white' : 'text-zinc-500'">
+              <div class="flex flex-col min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2 leading-tight">
+                  <h3 class="font-bold truncate text-sm" :class="achievement.unlocked ? 'text-white' : 'text-zinc-500'">
                     {{ achievement.title }}
                   </h3>
-                  <span class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-500 font-black uppercase tracking-widest self-start sm:self-auto">
-                    {{ achievement.category }}
-                  </span>
+                  <span class="text-[7px] bg-zinc-950/80 text-zinc-500 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">{{ achievement.category }}</span>
                 </div>
-
-                <!-- Description -->
-                <p class="text-xs sm:text-sm text-zinc-500 leading-snug line-clamp-2 sm:line-clamp-none">
+                <p class="text-[10px] text-zinc-500 font-medium leading-snug line-clamp-1">
                   {{ achievement.description }}
                 </p>
-
-                <!-- Progress Bar (for non-boolean achievements) -->
-                <div v-if="achievement.type !== 'boolean'" class="mt-3 sm:mt-4">
-                  <div class="flex justify-between text-[9px] sm:text-[10px] font-black text-zinc-600 mb-1.5 uppercase">
-                    <span>Прогресс</span>
-                    <span>{{ achievement.progress }} / {{ achievement.maxProgress }}</span>
-                  </div>
-                  <div class="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                    <div class="h-full bg-emerald-500 transition-all duration-1000"
-                         :style="{ width: `${Math.min((achievement.progress / achievement.maxProgress) * 100, 100)}%` }"></div>
-                  </div>
-                </div>
+              </div>
+            </div>
+            <div v-if="achievement.type !== 'boolean'" class="flex flex-col gap-1 mt-auto">
+              <div class="flex justify-between text-[8px] font-black uppercase text-zinc-600 tracking-tighter">
+                <span>Прогресс</span>
+                <span>{{ achievement.progress }} / {{ achievement.maxProgress }}</span>
+              </div>
+              <div class="h-1 w-full bg-zinc-950 rounded-full overflow-hidden shadow-inner">
+                <div class="h-full bg-emerald-500 transition-all duration-1000" :style="{ width: `${Math.min((achievement.progress / achievement.maxProgress) * 100, 100)}%` }"></div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Reset Button -->
-        <div class="mt-6 sm:mt-8">
-          <button @click="handleReset" 
-                  class="w-full py-3 sm:py-4 text-zinc-600 hover:text-rose-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors active:scale-95 touch-manipulation border border-zinc-800/50 hover:border-rose-500/30 rounded-xl sm:rounded-2xl bg-zinc-900/50 backdrop-blur-sm">
-            Сбросить весь прогресс
-          </button>
+      </div>
+      <div class="w-full flex flex-col shrink-0 bg-zinc-900 border-t border-zinc-800 z-40 px-8 py-6 gap-4">
+        <button @click="openResetModal" class="relative w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-rose-500/50 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-300 active:scale-95 h-[56px]">
+          <span class="text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px]">Сбросить весь прогресс</span>
+        </button>
+        <div v-if="stats" class="flex items-center justify-center">
+          <div class="px-4 py-1.5 bg-zinc-950/60 border border-zinc-800 rounded-full flex items-center gap-2 backdrop-blur-sm shadow-inner">
+            <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+            <span class="text-[9px] text-zinc-600 font-black uppercase tracking-widest whitespace-nowrap">Уровень мастерства: {{ stats.progressPercentage }}%</span>
+          </div>
         </div>
       </div>
     </div>
+    <transition name="modal">
+      <div v-if="isResetModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 w-full max-w-[400px] flex flex-col items-center gap-6 shadow-2xl">
+          <div class="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center border-2 border-rose-500/20 text-rose-500 text-3xl font-bold">!</div>
+          <div class="text-center flex flex-col gap-2">
+            <h2 class="text-xl font-black text-white uppercase tracking-tighter">Вы уверены?</h2>
+            <p class="text-zinc-500 text-sm font-medium leading-relaxed">Все достижения будут удалены навсегда.</p>
+          </div>
+          <div class="flex flex-col w-full gap-3">
+            <button @click="confirmReset" class="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95">Да, сбросить</button>
+            <button @click="isResetModalOpen = false" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95">Отмена</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -79,126 +107,35 @@ import { loadAchievements, getStats, resetAchievements, type Achievement } from 
 defineOptions({ name: 'AchievementsPage' });
 
 const achievements = ref<Achievement[]>([]);
+const isResetModalOpen = ref(false);
 const stats = computed(() => getStats());
 const block = { title: 'Достижения', subtitle: 'Ваш путь к мастерству TradeGuess' };
 
-const handleReset = () => {
-  if (confirm('Вы уверены? Это действие необратимо.')) achievements.value = resetAchievements();
+const openResetModal = () => {
+  isResetModalOpen.value = true;
 };
 
-onMounted(() => { achievements.value = loadAchievements(); });
+const confirmReset = () => {
+  achievements.value = resetAchievements();
+  isResetModalOpen.value = false;
+};
+
+onMounted(() => {
+  achievements.value = loadAchievements();
+});
 </script>
 
-<style>
-/* Safe area для мобильных устройств */
-.safe-area-padding {
-  padding-left: env(safe-area-inset-left, 12px);
-  padding-right: env(safe-area-inset-right, 12px);
-  padding-top: env(safe-area-inset-top, 12px);
-}
+<style scoped>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Дополнительный отступ для навигации (70px + safe-area-inset-bottom) */
-.pb-nav {
-  padding-bottom: calc(70px + env(safe-area-inset-bottom, 24px));
-}
-
-/* Улучшение для touch устройств */
-.touch-manipulation {
-  touch-action: manipulation;
-}
-
-/* Кастомный скроллбар */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #4ade80 transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #4ade80;
-  border-radius: 20px;
-}
-
-/* Паттерн с чётким кубком в левом верхнем углу */
-.bg-trophy-pattern {
-  background-color: #09090b;
-  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3C!-- Чёткий кубок с видимыми очертаниями --%3E%3Cg transform='translate(30, 30)'%3E%3C!-- Основание кубка --%3E%3Cellipse cx='70' cy='120' rx='25' ry='8' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Тело кубка --%3E%3Cpath d='M50 50 Q70 30 90 50 L90 100 Q70 120 50 100 Z' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Рукоятки --%3E%3Cpath d='M45 70 Q30 65 25 80 T45 95' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3Cpath d='M95 70 Q110 65 115 80 T95 95' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Верхняя часть --%3E%3Cellipse cx='70' cy='50' rx='20' ry='5' fill='none' stroke='%23fbbf24' stroke-width='3' opacity='0.2'/%3E%3C!-- Детализация --%3E%3Cline x1='60' y1='60' x2='80' y2='60' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Cline x1='65' y1='70' x2='75' y2='70' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Cline x1='60' y1='80' x2='80' y2='80' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Cline x1='65' y1='90' x2='75' y2='90' stroke='%23fbbf24' stroke-width='2' opacity='0.15'/%3E%3Ccircle cx='70' cy='55' r='2' fill='%23fbbf24' opacity='0.15'/%3E%3C/g%3E%3C!-- Световые блики для объема --%3E%3Cpath d='M55 55 Q70 45 85 55' fill='none' stroke='%23fde047' stroke-width='1' opacity='0.1'/%3E%3Cpath d='M85 85 Q70 95 55 85' fill='none' stroke='%23d97706' stroke-width='1' opacity='0.1'/%3E%3C/svg%3E");
-  background-size: 100px 100px;
-  background-repeat: repeat;
-  background-position: left top;
-  opacity: 0.9;
-}
-
-/* Улучшение для маленьких экранов */
-@media (max-width: 360px) {
-  .text-2xl {
-    font-size: 1.5rem;
-  }
-}
-
-/* Улучшение для горизонтальной ориентации на мобильных */
-@media (max-height: 500px) and (orientation: landscape) {
-  .min-h-screen {
-    min-height: auto;
-  }
-  .p-3 {
-    padding-top: 8px;
-    padding-bottom: 8px;
-  }
-  .pb-nav {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 12px));
-  }
-  .max-h-\[calc\(100vh-320px\)\] {
-    max-height: calc(100vh - 280px);
-  }
-}
-
-/* Оптимизация для очень высоких экранов */
-@media (min-height: 1000px) {
-  .min-h-screen {
-    min-height: 100vh;
-  }
-}
-
-/* Line clamp для длинных текстов */
-.line-clamp-2 {
+.line-clamp-1 {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-@media (min-width: 640px) {
-  .line-clamp-2 {
-    -webkit-line-clamp: unset;
-    display: block;
-  }
-}
-
-/* Плавная прокрутка для мобильных */
-@media (max-width: 768px) {
-  .custom-scrollbar {
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Адаптация для разных высот экрана */
-@media (max-height: 700px) {
-  .max-h-\[calc\(100vh-320px\)\] {
-    max-height: calc(100vh - 280px);
-  }
-}
-
-@media (min-height: 900px) {
-  .max-h-\[calc\(100vh-320px\)\] {
-    max-height: calc(100vh - 360px);
-  }
-}
+.modal-enter-active, .modal-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.modal-enter-from, .modal-leave-to { opacity: 0; transform: scale(0.9); }
 </style>

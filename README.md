@@ -56,36 +56,36 @@ npm run dev
 
 ### Главное меню (POST/auth - Авторизация в приложения):
 
-<img width="583" height="779" alt="image" src="https://github.com/user-attachments/assets/1161da9d-8945-4bab-a2ba-766a8fee28ee" />
+<img width="200" height="396" alt="image" src="https://github.com/user-attachments/assets/1161da9d-8945-4bab-a2ba-766a8fee28ee" />
 
 ### Профиль (GET/account - Профиль аккаунта в приложении):
 
-<img width="581" height="797" alt="image" src="https://github.com/user-attachments/assets/0a730cc6-696a-4499-a08f-8170b52792d7" />
+<img width="200" height="416" alt="image" src="https://github.com/user-attachments/assets/0a730cc6-696a-4499-a08f-8170b52792d7" />
 
 ### Страница игры (GET/trade-game - Запуск игры):
 
-<img width="581" height="812" alt="image" src="https://github.com/user-attachments/assets/f67a6495-4e76-4745-bf8f-d0d36fbd459c" />
+<img width="200" height="475" alt="image" src="https://github.com/user-attachments/assets/f67a6495-4e76-4745-bf8f-d0d36fbd459c" />
 
 
 ### Работа игры (POST/guess - Отправка предположения пользователя и получение результата):
 
-<img width="605" height="796" alt="image" src="https://github.com/user-attachments/assets/7cdf67a9-e5df-4c33-9e63-729f1fe90e1b" />
+<img width="200" height="391" alt="image" src="https://github.com/user-attachments/assets/7cdf67a9-e5df-4c33-9e63-729f1fe90e1b" />
 
 
 ### “Лидерборд” (GET/leaderboard - ):
 
-<img width="600" height="800" alt="image" src="https://github.com/user-attachments/assets/3daa7f60-5f8a-4fd1-a34a-6027744a8b0a" />
+<img width="200" height="400" alt="image" src="https://github.com/user-attachments/assets/3daa7f60-5f8a-4fd1-a34a-6027744a8b0a" />
 
 
 ### Статистика (GET/stats):
 
-<img width="423" height="754" alt="image" src="https://github.com/user-attachments/assets/7d574c45-8315-46f5-b714-dae1193011d6" />
+<img width="200" height="363" alt="image" src="https://github.com/user-attachments/assets/7d574c45-8315-46f5-b714-dae1193011d6" />
 
 
 
 ## Архитектура и взаимодействие компонентов:
 
-<img width="331" height="573" alt="image" src="https://github.com/user-attachments/assets/c6733ed2-f691-4cdf-9d01-967926157654" />
+<img width="200" height="473" alt="image" src="https://github.com/user-attachments/assets/c6733ed2-f691-4cdf-9d01-967926157654" />
 
 1. Пользователь открывает бота в Telegram.
 2. Frontend получает данные пользователя от Telegram, отправляет их на /auth.

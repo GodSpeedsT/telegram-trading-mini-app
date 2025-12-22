@@ -10,6 +10,7 @@
         <rect width="100%" height="100%" fill="url(#gamePuzzle)" />
       </svg>
     </div>
+
     <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
       <transition-group name="notification">
         <div v-for="notification in notifications" :key="notification.id"
@@ -24,6 +25,7 @@
         </div>
       </transition-group>
     </div>
+
     <div class="pt-5 pb-2 px-4 z-20 shrink-0 flex flex-col gap-3 bg-zinc-950">
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-3">
@@ -48,14 +50,22 @@
         </div>
       </div>
       <div class="flex gap-2 bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-800">
-        <button @click="setGameMode('candle')" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase transition-all duration-300" :class="gameMode === 'candle' ? 'bg-zinc-800 text-white shadow-lg border-2 border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'" :disabled="gameState !== 'playing'">
+        <button @click="setGameMode('candle')"
+                class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase transition-all duration-300"
+                :class="gameMode === 'candle' ? 'bg-zinc-800 text-white shadow-lg border-2 border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'"
+                :disabled="gameState !== 'playing'">
           1 Свеча
         </button>
-        <button @click="setGameMode('trend')" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase transition-all duration-300" :class="gameMode === 'trend' ? 'bg-zinc-800 text-white shadow-lg border-2 border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'" :disabled="gameState !== 'playing'">
+        <button @click="setGameMode('trend')"
+                class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase transition-all duration-300"
+                :class="gameMode === 'trend' ? 'bg-zinc-800 text-white shadow-lg border-2 border-zinc-700' : 'text-zinc-500 hover:text-zinc-300'"
+                :disabled="gameState !== 'playing'">
           Тренд
         </button>
       </div>
     </div>
+
+    <!-- Модалка лимита (перекрывает всё) -->
     <transition name="fade">
       <div v-if="gameState === 'limitReached'"
            class="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-b from-zinc-950/95 to-black/95 backdrop-blur-xl p-4 sm:p-6 md:p-8 overflow-hidden">
@@ -65,6 +75,7 @@
                     shadow-2xl shadow-yellow-500/20
                     flex flex-col items-center text-center space-y-6 sm:space-y-8 md:space-y-10 p-6 sm:p-8 md:p-10 lg:p-12">
           <div class="text-7xl sm:text-8xl md:text-9xl drop-shadow-2xl">⏰</div>
+
           <div class="space-y-3 sm:space-y-4 md:space-y-5">
             <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-yellow-400 tracking-tight leading-tight">
               Дневной лимит исчерпан
@@ -73,6 +84,7 @@
               Попробуйте завтра!
             </p>
           </div>
+
           <div class="space-y-2 sm:space-y-3 md:space-y-4 text-base sm:text-lg md:text-xl text-zinc-400 leading-relaxed">
             <p>Дневной лимит попыток исчерпан.</p>
             <p>Вернитесь завтра за новыми раундами!</p>
@@ -88,6 +100,8 @@
         </div>
       </div>
     </transition>
+
+    <!-- Result Modal -->
     <transition name="slide-down">
       <div v-if="showResultModal && gameState === 'result'"
            class="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
@@ -109,9 +123,13 @@
         </div>
       </div>
     </transition>
+
+    <!-- Chart Container -->
     <div class="flex-1 w-full z-10 relative mt-2 flex flex-col min-h-0 bg-[#131722] border-y border-zinc-800">
       <div ref="chartRef" class="w-full h-full absolute inset-0 z-10"></div>
     </div>
+
+    <!-- Bottom Controls -->
     <div class="px-4 pt-4 z-20 shrink-0 h-24 sm:h-28 md:h-32 bg-zinc-950 flex items-start">
       <div v-if="gameState === 'playing'" class="grid grid-cols-2 gap-4 h-16 sm:h-20 md:h-24 w-full">
         <button @click="makeGuess('long')"
@@ -168,7 +186,7 @@ const segmentId = ref(0);
 const serverMessage = ref('');
 const score = computed(() => gameStore.score);
 const streak = computed(() => gameStore.streak);
-const notifications = ref<any[]>([]);
+const notifications = ref<{ id: number; title: string; description: string }[]>([]);
 
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   const token = authStore.getToken();
@@ -177,8 +195,8 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
-      ...options.headers
-    }
+      ...options.headers,
+    },
   };
   const response = await fetch(url, config);
   const data = await response.json();
@@ -188,8 +206,8 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
       ...config,
       headers: {
         'Authorization': `Bearer ${authStore.getToken()}`,
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     };
     const retryResponse = await fetch(url, retryConfig);
     return await retryResponse.json();
@@ -217,7 +235,9 @@ const loadNewRound = async (isRetry = false) => {
     }
 
     if (!result.data?.candles?.length) {
-      throw new Error('Нет данных свечей');
+      serverMessage.value = 'Нет данных свечей';
+      gameState.value = 'limitReached';
+      return;
     }
 
     allCandles.value = result.data.candles.map((c: ServerCandle) => ({
@@ -226,7 +246,7 @@ const loadNewRound = async (isRetry = false) => {
       high: parseFloat(c.h.toString()),
       low: parseFloat(c.l.toString()),
       close: parseFloat(c.c.toString()),
-      volume: parseFloat(c.v.toString())
+      volume: parseFloat(c.v.toString()),
     }));
 
     segmentId.value = result.data.segmentId;
@@ -237,7 +257,7 @@ const loadNewRound = async (isRetry = false) => {
     gameState.value = 'playing';
     await nextTick();
     initChartSmooth(allCandles.value.slice(0, visibleCandlesCount.value));
-  } catch (error: any) {
+  } catch {
     if (!isRetry) setTimeout(() => loadNewRound(true), 2000);
     else {
       gameState.value = 'limitReached';
@@ -248,61 +268,52 @@ const loadNewRound = async (isRetry = false) => {
 
 const initChartSmooth = (data: Candle[]) => {
   if (!chartRef.value || !data.length) return;
+
   if (chartInstance) {
     chartInstance.dispose();
   }
-  chartInstance = echarts.init(chartRef.value);
-  updateChartData(data, false);
-};
 
-const updateChartData = (data: Candle[], showResultLine = false) => {
-  if (!chartInstance || !data.length) return;
-  const dates = data.map(c => c.date);
-  const values = data.map(c => [c.open, c.close, c.low, c.high]);
-  const splitIndex = showResultLine ? visibleCandlesCount.value - 1 : -1;
+  chartInstance = echarts.init(chartRef.value);
 
   const option: echarts.EChartsOption = {
     animation: true,
-    animationDuration: 400,
-    animationEasing: 'cubicOut',
+    animationDurationUpdate: 300,
+    animationEasingUpdate: 'linear',
     backgroundColor: '#131722',
     grid: { left: 10, right: 5, top: 40, bottom: 60, containLabel: false },
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
-        const p = Array.isArray(params) ? params[0] : params;
+      formatter: (params: unknown) => {
+        const p = Array.isArray(params) ? params[0] : params as { dataIndex: number };
         const candle = data[p.dataIndex];
         return candle ? `<div style="font-size:11px;">${candle.date}<br/>O: ${candle.open}<br/>C: ${candle.close}</div>` : '';
-      }
+      },
     },
     xAxis: {
       type: 'category',
-      data: dates,
+      data: data.map(c => c.date),
       axisLabel: { color: '#787b86', fontSize: 9 },
-      splitLine: { show: true, lineStyle: { color: '#2f3342', opacity: 0.5 } }
+      splitLine: { show: true, lineStyle: { color: '#2f3342', opacity: 0.5 } },
     },
     yAxis: {
       scale: true,
       position: 'right',
       axisLabel: { color: '#787b86', fontSize: 9 },
-      splitLine: { show: true, lineStyle: { color: '#2f3342', opacity: 0.5 } }
+      splitLine: { show: true, lineStyle: { color: '#2f3342', opacity: 0.5 } },
     },
     series: [{
       type: 'candlestick',
-      data: values,
+      data: data.map(c => [c.open, c.close, c.low, c.high]),
       itemStyle: {
         color: '#0ecb81',
         color0: '#f6465d',
         borderColor: '#0ecb81',
-        borderColor0: '#f6465d'
+        borderColor0: '#f6465d',
       },
-      markLine: showResultLine && splitIndex >= 0 ? {
-        symbol: ['none', 'none'],
-        data: [{ xAxis: splitIndex, lineStyle: { color: '#8b5cf6', type: 'dashed', width: 2 } }]
-      } : undefined
-    }]
+    }],
   };
-  chartInstance.setOption(option, { notMerge: false, lazyUpdate: true });
+
+  chartInstance.setOption(option);
 };
 
 const makeGuess = async (direction: 'long' | 'short') => {
@@ -331,11 +342,11 @@ const makeGuess = async (direction: 'long' | 'short') => {
       high: parseFloat(c.h.toString()),
       low: parseFloat(c.l.toString()),
       close: parseFloat(c.c.toString()),
-      volume: parseFloat(c.v.toString())
+      volume: parseFloat(c.v.toString()),
     }));
 
     animateResultCandles(resultCandles, result.data.isCorrect);
-  } catch (error: any) {
+  } catch {
     gameState.value = 'playing';
     authStore.safeShowAlert('Ошибка сети');
   }
@@ -345,12 +356,22 @@ const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
   let currentIndex = 0;
   const stepDuration = gameMode.value === 'candle' ? 800 : 200;
 
+  const currentDates = allCandles.value.slice(0, visibleCandlesCount.value).map(c => c.date);
+  const currentValues = allCandles.value.slice(0, visibleCandlesCount.value).map(c => [c.open, c.close, c.low, c.high]);
+
   const animateStep = () => {
     if (currentIndex < resultCandles.length) {
-      const visibleData = allCandles.value.slice(0, visibleCandlesCount.value);
-      const animatedData = [...visibleData, ...resultCandles.slice(0, currentIndex + 1)];
+      const newCandle = resultCandles[currentIndex];
+      if (!newCandle) return;
 
-      updateChartData(animatedData, true);
+      currentDates.push(newCandle.date);
+      currentValues.push([newCandle.open, newCandle.close, newCandle.low, newCandle.high]);
+
+      chartInstance?.setOption({
+        xAxis: { data: currentDates },
+        series: [{ data: currentValues }],
+      }, { notMerge: false, lazyUpdate: true });
+
       currentIndex++;
       animationTimer = setTimeout(animateStep, stepDuration);
     } else {
@@ -364,14 +385,14 @@ const animateResultCandles = (resultCandles: Candle[], isCorrect: boolean) => {
         gameStore.resetStreak();
       }
 
-      const newlyUnlocked = updateAllAchievements({
+      updateAllAchievements({
         totalWins: 0,
         trendWins: 0,
         candleWins: 0,
         currentTrendStreak: 0,
         currentCandleStreak: 0,
         totalScore: gameStore.score,
-        currentStreak: gameStore.streak
+        currentStreak: gameStore.streak,
       });
 
       resultTimer = setTimeout(() => {
@@ -412,31 +433,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.slide-down-enter-active {
-  animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.slide-down-leave-active {
-  animation: slideDown 0.3s ease-in reverse;
-}
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-.animate-bounce {
-  animation: bounce 1.5s infinite;
-}
-@keyframes slideDown {
-  0% { opacity: 0; transform: translateY(-20px) scale(0.95); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
 .notification-move {
   transition: transform 0.3s ease;
 }

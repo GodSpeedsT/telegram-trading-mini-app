@@ -13,8 +13,12 @@
       </svg>
     </div>
     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 pointer-events-none z-1"></div>
-    <div class="relative z-10 w-full max-w-[98%] sm:max-w-[650px] md:max-w-[950px] lg:max-w-[1200px] xl:max-w-[1500px] flex flex-col items-center bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 rounded-[32px] md:rounded-[56px] h-fit max-h-[80vh]">
+
+    <!-- Основной контейнер с translate-y-[-5vh] -->
+    <div class="relative z-10 w-full max-w-[98%] sm:max-w-[650px] md:max-w-[950px] lg:max-w-[1200px] xl:max-w-[1500px] flex flex-col items-center bg-zinc-900 border border-zinc-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 rounded-[32px] md:rounded-[56px] h-fit max-h-[80vh] translate-y-[2vh] md:translate-y-[-3vh] lg:translate-y-[-5vh]">
+
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent opacity-50 animate-pulse"></div>
+
       <div class="flex items-center justify-between shrink-0 w-full px-5 md:px-12 py-4 md:py-6 bg-zinc-900/50 border-b border-zinc-800/50 gap-4">
         <div class="flex items-center gap-3 md:gap-5">
           <div class="w-10 h-10 md:w-16 md:h-16 bg-zinc-800 rounded-2xl border border-zinc-700 flex items-center justify-center shadow-lg relative overflow-visible shrink-0 transition-transform hover:scale-110">
@@ -43,6 +47,7 @@
           </div>
         </div>
       </div>
+
       <div class="flex-1 w-full overflow-y-auto no-scrollbar px-4 md:px-12 lg:px-16 py-4 md:py-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4 lg:gap-5">
           <div v-for="achievement in achievements" :key="achievement.id" class="relative border transition-all duration-300 flex items-center p-3 md:p-5 lg:p-6 gap-3 md:gap-5 overflow-hidden rounded-2xl md:rounded-[32px] shrink-0"
@@ -81,6 +86,7 @@
           </div>
         </div>
       </div>
+
       <div class="w-full shrink-0 bg-zinc-950/40 border-t border-zinc-800/50 z-40 px-6 py-3 md:py-4 flex items-center justify-center gap-4">
         <div class="flex items-center gap-3 px-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full shadow-inner">
           <div class="relative flex items-center justify-center">
